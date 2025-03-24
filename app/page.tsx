@@ -117,7 +117,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch SEO data");
       const result = await res.json();
       setData(result);
-      console.log(result)
+      console.log(result);
       setActiveSection("overview");
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -125,6 +125,26 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  function extractKeywordFromUrl(url: string): string | null {
+    if (!url || typeof url !== "string") {
+      return null;
+    }
+
+    try {
+      const hostname = new URL(url).hostname;
+      // Remove 'www.' prefix if it exists
+      const cleaned = hostname.startsWith("www.")
+        ? hostname.slice(4)
+        : hostname;
+      // Take the domain without TLD (e.g., 'example.com' -> 'example')
+      const keyword = cleaned.split(".")[0];
+      return keyword || null;
+    } catch (error) {
+      // If URL is invalid
+      return null;
+    }
+  }
 
   const handleCopy = () => {
     if (data) {
@@ -153,7 +173,7 @@ export default function Home() {
       ? [
           { name: "Your Site", value: data.user.seoScore, fill: COLORS[0] },
           ...data.competitors.map((c: any, i: number) => ({
-            name: `Competitor ${i + 1}`,
+            name: `${extractKeywordFromUrl(c.url)} `,
             value: c.seoScore?.score || 0,
             fill: COLORS[(i + 1) % COLORS.length],
           })),
@@ -456,7 +476,10 @@ export default function Home() {
                           </div>
                           <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
                             {data.purpose ? (
-                             formatPurposeText(data.purpose.charAt(0).toUpperCase() + data.purpose.slice(1))
+                              formatPurposeText(
+                                data.purpose.charAt(0).toUpperCase() +
+                                  data.purpose.slice(1)
+                              )
                             ) : (
                               <p>
                                 This tool analyzes your website's SEO
@@ -731,8 +754,10 @@ export default function Home() {
                                 </div>
                                 <div>
                                   <h3 className="font-medium text-gray-900 dark:text-white">
-                                    Competitor {idx + 1}
+                                    {extractKeywordFromUrl(comp?.url) ||
+                                      `Competitor ${idx + 1}`}
                                   </h3>
+
                                   <a
                                     href={comp.url}
                                     className="text-sky-500 text-sm hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1 truncate"
@@ -1004,8 +1029,71 @@ export default function Home() {
                             Improvement Suggestions
                           </h3>
                         </div>
+                        {data.suggestions?.suggestion ? (
+                          <>
+                            {/* Heading */}
+                            <p className="text-gray-700 dark:text-gray-300 text-base mb-4 leading-relaxed">
+                              {data.suggestions.suggestion
+                                .split(/\n\n[1-5]\./)[0]
+                                .replace(/^"|"$/g, "")}
+                            </p>
 
-                        {suggestions.length > 0 ? (
+                            {/* Suggestions */}
+                            <div className="space-y-4">
+                              {data.suggestions.suggestion
+                                .split(/\n\n[1-5]\./)
+                                .slice(1)
+                                .map(
+                                  (
+                                    point: string,
+                                    index: React.Key | null | undefined
+                                  ) => (
+                                    <motion.div
+                                      key={index}
+                                      initial={{ opacity: 0, x: -20 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{
+                                        duration: 0.4,
+                                        delay:
+                                          typeof index === "number"
+                                            ? index * 0.1
+                                            : 0,
+                                      }}
+                                      className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30 hover:border-sky-300 dark:hover:border-sky-700 transition-colors group"
+                                      whileHover={{
+                                        scale: 1.01,
+                                        boxShadow:
+                                          "0 4px 12px rgba(0, 0, 0, 0.05)",
+                                        backgroundColor: darkMode
+                                          ? "rgba(15, 23, 42, 0.9)"
+                                          : "rgba(255, 255, 255, 0.9)",
+                                      }}
+                                    >
+                                      <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors">
+                                        <CheckSquare
+                                          size={18}
+                                          className="text-emerald-500 dark:text-emerald-400"
+                                        />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">
+                                          {point.trim()}
+                                        </p>
+                                      </div>
+                                    </motion.div>
+                                  )
+                                )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
+                            <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200 custom-scrollbar max-h-96 overflow-y-auto pr-2 leading-relaxed">
+                              No suggestions available.
+                            </pre>
+                          </div>
+                        )}
+
+                        {/* {suggestions.length > 0 ? (
                           <div className="space-y-4">
                             {suggestions.map((suggestion, index) => (
                               <motion.div
@@ -1035,11 +1123,6 @@ export default function Home() {
                                   <p className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">
                                     {suggestion}
                                   </p>
-                                  <div className="mt-2 flex justify-end">
-                                    <span className="text-xs text-sky-500 dark:text-sky-400 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      Implement this <ArrowRight size={12} />
-                                    </span>
-                                  </div>
                                 </div>
                               </motion.div>
                             ))}
@@ -1051,7 +1134,7 @@ export default function Home() {
                                 "No suggestions available."}
                             </pre>
                           </div>
-                        )}
+                        )} */}
                       </motion.div>
                     </motion.div>
                   )}
@@ -1077,7 +1160,7 @@ export default function Home() {
                         Copied!
                       </span>
                     ) : (
-                      "Copy JSON"
+                      "Copy Suggestions"
                     )}
                   </motion.button>
                   <motion.button
@@ -1087,7 +1170,7 @@ export default function Home() {
                     className="flex items-center gap-2 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     <Download size={18} />
-                    Download JSON
+                    Download Suggestions
                   </motion.button>
                 </motion.div>
               </motion.div>
