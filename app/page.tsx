@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useInView } from "framer-motion"
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts"
 import {
   Copy,
@@ -23,8 +23,13 @@ import {
   ChevronDown,
   ChevronUp,
   LinkIcon,
+  Award,
+  CheckSquare,
+  Info,
+  Sparkles,
 } from "lucide-react"
 
+// Enhanced color palette
 const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
 
 export default function Home() {
@@ -36,6 +41,13 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false)
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
+  const overviewRef = useRef<HTMLDivElement>(null)
+  const isOverviewInView = useInView(overviewRef, { once: true, amount: 0.3 })
+
+  // Animated values for radial progress
+  const scoreProgress = useMotionValue(0)
+  const scoreDisplay = useTransform(scoreProgress, (value) => Math.round(value))
+  const scoreSpring = useSpring(scoreProgress, { stiffness: 100, damping: 30 })
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode)
@@ -46,6 +58,15 @@ export default function Home() {
       resultsRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [data])
+
+  useEffect(() => {
+    if (data && data.user?.seoScore) {
+      scoreProgress.set(0)
+      setTimeout(() => {
+        scoreProgress.set(data.user.seoScore)
+      }, 500)
+    }
+  }, [data, scoreProgress])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,7 +109,7 @@ export default function Home() {
   const chartData =
     data && data.user?.seoScore
       ? [
-          { name: "Your SEO Score", value: data.user.seoScore, fill: "#6366F1" },
+          { name: "Your Site", value: data.user.seoScore, fill: "#6366F1" },
           ...data.competitors.map((c: any, i: number) => ({
             name: `Competitor ${i + 1}`,
             value: c.seoScore?.score || 0,
@@ -97,6 +118,23 @@ export default function Home() {
         ]
       : []
 
+  // Parse suggestions into a checklist format if possible
+  const parseSuggestions = (suggestionText: string) => {
+    if (!suggestionText) return []
+
+    // Try to split by numbered items, bullet points, or new lines
+    const lines = suggestionText.split(/\n+/)
+
+    return lines
+      .filter((line) => line.trim().length > 0)
+      .map((line) => {
+        // Remove any leading numbers, dashes, asterisks, etc.
+        return line.trim().replace(/^[\d\-*•.]+\s*/, "")
+      })
+  }
+
+  const suggestions = data?.suggestions?.suggestion ? parseSuggestions(data.suggestions.suggestion) : []
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 dark:from-slate-950 dark:via-gray-900 dark:to-indigo-950/30 text-gray-900 dark:text-white transition-colors duration-300">
       {/* Decorative Elements */}
@@ -104,6 +142,17 @@ export default function Home() {
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
         <div className="absolute top-1/3 -right-24 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 left-1/3 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
+
+        {/* Additional decorative elements */}
+        <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-indigo-400/30 rounded-full animate-pulse"></div>
+        <div
+          className="absolute top-1/3 right-1/3 w-6 h-6 bg-purple-400/20 rounded-full animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute bottom-1/4 right-1/4 w-5 h-5 bg-indigo-400/20 rounded-full animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -115,24 +164,41 @@ export default function Home() {
           className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16"
         >
           <div className="flex items-center gap-4">
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-lg">
+            <motion.div
+              className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-lg"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               <Globe size={32} />
-            </div>
+            </motion.div>
             <div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <motion.h1
+                className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
                 SEO Analyzer
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">
+              </motion.h1>
+              <motion.p
+                className="text-gray-600 dark:text-gray-300 mt-1"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
                 Analyze and optimize your website's SEO performance
-              </p>
+              </motion.p>
             </div>
           </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, rotate: 15 }}
             whileTap={{ scale: 0.95 }}
             className="p-3 rounded-full bg-white dark:bg-slate-800 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700"
             onClick={() => setDarkMode(!darkMode)}
             title="Toggle Theme"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
           >
             {darkMode ? <Sun size={22} className="text-amber-400" /> : <Moon size={22} className="text-indigo-600" />}
           </motion.button>
@@ -145,12 +211,22 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-16 bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700/50"
         >
-          <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3 text-indigo-700 dark:text-indigo-300">
+          <motion.h2
+            className="text-2xl font-semibold mb-6 flex items-center gap-3 text-indigo-700 dark:text-indigo-300"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+          >
             <Search className="text-indigo-500" size={24} />
             Analyze Your Website
-          </h2>
+          </motion.h2>
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
+            <motion.div
+              className="flex-1 relative"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+            >
               <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
                 <Globe size={20} />
               </div>
@@ -162,13 +238,16 @@ export default function Home() {
                 required
                 className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
               />
-            </div>
+            </motion.div>
             <motion.button
               type="submit"
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-8 py-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[180px]"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.4 }}
             >
               {loading ? (
                 <>
@@ -183,6 +262,20 @@ export default function Home() {
               )}
             </motion.button>
           </form>
+
+          {url && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+              className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+            >
+              <Info size={14} />
+              <span>
+                Analyzing: <span className="text-indigo-600 dark:text-indigo-400 font-medium">{url}</span>
+              </span>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Error */}
@@ -222,6 +315,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
+                ref={overviewRef}
               >
                 <div
                   className="p-6 cursor-pointer flex justify-between items-center"
@@ -233,8 +327,13 @@ export default function Home() {
                     </div>
                     Overview
                   </h2>
-                  <div className="text-gray-400">
-                    {activeSection === "overview" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                      {activeSection === "overview" ? "Hide details" : "Show details"}
+                    </span>
+                    <div className="text-gray-400">
+                      {activeSection === "overview" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
                   </div>
                 </div>
 
@@ -246,9 +345,18 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                     className="px-6 pb-6"
                   >
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
                       {/* Purpose Card */}
-                      <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-slate-900 dark:to-indigo-950/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+                      <motion.div
+                        className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-slate-900 dark:to-indigo-950/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
                         <div className="flex items-center gap-3 mb-4">
                           <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
                             <Target className="text-indigo-600 dark:text-indigo-400" size={20} />
@@ -256,188 +364,128 @@ export default function Home() {
                           <h3 className="font-semibold text-indigo-700 dark:text-indigo-300">Purpose</h3>
                         </div>
                         <p className="text-gray-700 dark:text-gray-300">{data.purpose}</p>
-                      </div>
+                      </motion.div>
 
                       {/* Score Card */}
-                      <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-slate-900 dark:to-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
+                      <motion.div
+                        className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-slate-900 dark:to-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/30"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
                         <div className="flex items-center gap-3 mb-4">
                           <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-lg">
-                            <CheckCircle className="text-emerald-600 dark:text-emerald-400" size={20} />
+                            <Award className="text-emerald-600 dark:text-emerald-400" size={20} />
                           </div>
                           <h3 className="font-semibold text-emerald-700 dark:text-emerald-300">Your SEO Score</h3>
                         </div>
                         <div className="flex items-center justify-center">
                           <div className="relative w-32 h-32">
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
-                                {data.user?.seoScore || 0}
-                              </span>
+                              <motion.span className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
+                                {scoreDisplay}
+                              </motion.span>
                             </div>
                             <ResponsiveContainer width="100%" height="100%">
                               <RadialBarChart
                                 innerRadius="70%"
                                 outerRadius="100%"
-                                data={[{ name: "Score", value: data.user?.seoScore || 0, fill: "#10B981" }]}
+                                data={[{ name: "Score", value: 100, fill: "url(#scoreGradient)" }]}
                                 startAngle={90}
                                 endAngle={-270}
                               >
+                                <defs>
+                                  <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor="#34D399" stopOpacity={0.8} />
+                                  </linearGradient>
+                                </defs>
                                 <RadialBar background dataKey="value" cornerRadius={30} fill="#10B981" />
+                                <RadialBar
+                                  background={false}
+                                  dataKey="value"
+                                  cornerRadius={30}
+                                  fill="url(#scoreGradient)"
+                                  // @ts-ignore - custom prop for animation
+                                  animationBegin={0}
+                                  animationDuration={1500}
+                                  // @ts-ignore - using motion value for custom animation
+                                  data={[{ name: "Score", value: scoreSpring.get(), fill: "url(#scoreGradient)" }]}
+                                />
                               </RadialBarChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
 
-                      {/* URL Card */}
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-slate-900 dark:to-purple-950/20 p-6 rounded-2xl border border-purple-100 dark:border-purple-900/30">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="bg-purple-100 dark:bg-purple-900/50 p-2 rounded-lg">
-                            <Globe className="text-purple-600 dark:text-purple-400" size={20} />
-                          </div>
-                          <h3 className="font-semibold text-purple-700 dark:text-purple-300">Analyzed URL</h3>
-                        </div>
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors truncate"
-                        >
-                          <LinkIcon size={16} />
-                          <span className="truncate">{url}</span>
-                        </a>
-                      </div>
-                    </div>
-
-                    {/* Chart */}
-                    <div className="mt-8 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-                      <h3 className="text-lg font-semibold mb-6 flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                        <BarChart2 className="text-indigo-500" size={20} />
-                        SEO Score Comparison
-                      </h3>
-                      <div className="h-80">
-                        <ResponsiveContainer>
-                          <PieChart>
-                            <Pie
-                              data={chartData}
-                              dataKey="value"
-                              nameKey="name"
-                              outerRadius={120}
-                              label
-                              animationDuration={1000}
-                              animationBegin={200}
-                            >
-                              {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} className="drop-shadow-md" />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: darkMode ? "#1e293b" : "white",
-                                borderRadius: "0.75rem",
-                                border: "none",
-                                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                                color: darkMode ? "white" : "black",
-                                padding: "12px 16px",
-                              }}
-                            />
-                            <Legend
-                              layout="horizontal"
-                              verticalAlign="bottom"
-                              align="center"
-                              wrapperStyle={{ paddingTop: "20px" }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-
-              {/* Metadata Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
-              >
-                <div
-                  className="p-6 cursor-pointer flex justify-between items-center"
-                  onClick={() => toggleSection("metadata")}
-                >
-                  <h2 className="text-xl font-semibold flex items-center gap-3 text-indigo-700 dark:text-indigo-300">
-                    <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg">
-                      <FileText className="text-indigo-600 dark:text-indigo-400" size={22} />
-                    </div>
-                    Metadata
-                  </h2>
-                  <div className="text-gray-400">
-                    {activeSection === "metadata" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </div>
-                </div>
-
-                {activeSection === "metadata" && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="px-6 pb-6"
-                  >
-                    <div className="space-y-6">
-                      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
-                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
-                          <FileText size={16} className="text-indigo-500" />
-                          Title
+                      {/* Chart Card */}
+                      <motion.div
+                        className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                          <BarChart2 className="text-indigo-500" size={20} />
+                          SEO Score Comparison
                         </h3>
-                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
-                          <p className="text-gray-800 dark:text-gray-200 font-medium">
-                            {data.user?.metadata?.title || "N/A"}
-                          </p>
+                        <div className="h-[180px]">
+                          <ResponsiveContainer>
+                            <PieChart>
+                              <defs>
+                                {COLORS.map((color, index) => (
+                                  <linearGradient key={index} id={`colorGradient${index}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={color} stopOpacity={0.8} />
+                                    <stop offset="100%" stopColor={color} stopOpacity={0.9} />
+                                  </linearGradient>
+                                ))}
+                              </defs>
+                              <Pie
+                                data={chartData}
+                                dataKey="value"
+                                nameKey="name"
+                                outerRadius={70}
+                                label={({ name, value }) => `${name}: ${value}`}
+                                labelLine={false}
+                                animationDuration={1000}
+                                animationBegin={200}
+                              >
+                                {chartData.map((entry, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={`url(#colorGradient${index})`}
+                                    className="drop-shadow-md"
+                                  />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: darkMode ? "#1e293b" : "white",
+                                  borderRadius: "0.75rem",
+                                  border: "none",
+                                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                  color: darkMode ? "white" : "black",
+                                  padding: "12px 16px",
+                                }}
+                              />
+                              <Legend
+                                layout="horizontal"
+                                verticalAlign="bottom"
+                                align="center"
+                                wrapperStyle={{ paddingTop: "10px" }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
                         </div>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
-                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
-                          <FileText size={16} className="text-indigo-500" />
-                          Description
-                        </h3>
-                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
-                          <p className="text-gray-800 dark:text-gray-200">
-                            {data.user?.metadata?.description || "No description provided."}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
-                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
-                          <LinkIcon size={16} className="text-indigo-500" />
-                          Links
-                        </h3>
-                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
-                          {data.user?.metadata?.links?.length > 0 ? (
-                            <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                              {data.user?.metadata?.links?.map((link: string, index: number) => (
-                                <li key={index} className="flex items-center gap-2 group">
-                                  <div className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-lg group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/30 transition-colors">
-                                    <ExternalLink size={14} className="text-indigo-600 dark:text-indigo-400" />
-                                  </div>
-                                  <a
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors truncate text-sm"
-                                  >
-                                    {link}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500 dark:text-gray-400">No links found</p>
-                          )}
-                        </div>
-                      </div>
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -447,7 +495,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
                 className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
               >
                 <div
@@ -460,8 +508,13 @@ export default function Home() {
                     </div>
                     Competitor Analysis
                   </h2>
-                  <div className="text-gray-400">
-                    {activeSection === "competitors" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                      {activeSection === "competitors" ? "Hide details" : "Show details"}
+                    </span>
+                    <div className="text-gray-400">
+                      {activeSection === "competitors" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
                   </div>
                 </div>
 
@@ -473,7 +526,8 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                     className="px-6 pb-6"
                   >
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Competitor Cards */}
+                    <div className="grid gap-6 md:grid-cols-2">
                       {data.competitors.map((comp: any, idx: number) => (
                         <motion.div
                           key={idx}
@@ -481,9 +535,12 @@ export default function Home() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.4, delay: idx * 0.1 }}
                           className="bg-gradient-to-br from-white to-indigo-50/30 dark:from-slate-900 dark:to-indigo-950/10 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-                          whileHover={{ y: -5 }}
+                          whileHover={{
+                            y: -5,
+                            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                          }}
                         >
-                          <div className="bg-indigo-600 h-2"></div>
+                          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2"></div>
                           <div className="p-6">
                             <div className="flex items-start gap-3 mb-4">
                               <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
@@ -511,11 +568,13 @@ export default function Home() {
                                     {comp.seoScore?.score || "0"}
                                   </span>
                                 </div>
-                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                                  <div
-                                    className="bg-indigo-600 h-2.5 rounded-full"
-                                    style={{ width: `${comp.seoScore?.score || 0}%` }}
-                                  ></div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                                  <motion.div
+                                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2.5 rounded-full"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${comp.seoScore?.score || 0}%` }}
+                                    transition={{ duration: 1, delay: 0.5 }}
+                                  />
                                 </div>
                               </div>
 
@@ -531,6 +590,134 @@ export default function Home() {
                           </div>
                         </motion.div>
                       ))}
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+
+              {/* Metadata Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
+              >
+                <div
+                  className="p-6 cursor-pointer flex justify-between items-center"
+                  onClick={() => toggleSection("metadata")}
+                >
+                  <h2 className="text-xl font-semibold flex items-center gap-3 text-indigo-700 dark:text-indigo-300">
+                    <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg">
+                      <FileText className="text-indigo-600 dark:text-indigo-400" size={22} />
+                    </div>
+                    Metadata
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                      {activeSection === "metadata" ? "Hide details" : "Show details"}
+                    </span>
+                    <div className="text-gray-400">
+                      {activeSection === "metadata" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
+                  </div>
+                </div>
+
+                {activeSection === "metadata" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="px-6 pb-6"
+                  >
+                    <div className="space-y-6">
+                      <motion.div
+                        className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                          <FileText size={16} className="text-indigo-500" />
+                          Title
+                        </h3>
+                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+                          <p className="text-gray-800 dark:text-gray-200 font-medium">
+                            {data.user?.metadata?.title || "N/A"}
+                          </p>
+                        </div>
+                      </motion.div>
+
+                      <motion.div
+                        className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                          <FileText size={16} className="text-indigo-500" />
+                          Description
+                        </h3>
+                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+                          <p className="text-gray-800 dark:text-gray-200">
+                            {data.user?.metadata?.description || "No description provided."}
+                          </p>
+                        </div>
+                      </motion.div>
+
+                      <motion.div
+                        className="bg-gradient-to-r from-indigo-50 to-indigo-100/30 dark:from-slate-900 dark:to-indigo-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        whileHover={{
+                          y: -5,
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                        }}
+                      >
+                        <h3 className="font-medium text-indigo-700 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                          <LinkIcon size={16} className="text-indigo-500" />
+                          Links
+                        </h3>
+                        <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+                          {data.user?.metadata?.links?.length > 0 ? (
+                            <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                              {data.user?.metadata?.links?.map((link: string, index: number) => (
+                                <motion.li
+                                  key={index}
+                                  className="flex items-center gap-2 group"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ duration: 0.3, delay: 0.1 * index }}
+                                  whileHover={{ x: 5 }}
+                                >
+                                  <div className="bg-indigo-100 dark:bg-indigo-900/30 p-1.5 rounded-lg group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/30 transition-colors">
+                                    <ExternalLink size={14} className="text-indigo-600 dark:text-indigo-400" />
+                                  </div>
+                                  <a
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors truncate text-sm"
+                                  >
+                                    {link}
+                                  </a>
+                                </motion.li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500 dark:text-gray-400">No links found</p>
+                          )}
+                        </div>
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -553,8 +740,13 @@ export default function Home() {
                     </div>
                     Suggestions
                   </h2>
-                  <div className="text-gray-400">
-                    {activeSection === "suggestions" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                      {activeSection === "suggestions" ? "Hide details" : "Show details"}
+                    </span>
+                    <div className="text-gray-400">
+                      {activeSection === "suggestions" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </div>
                   </div>
                 </div>
 
@@ -566,19 +758,48 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                     className="px-6 pb-6"
                   >
-                    <div className="bg-gradient-to-r from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30">
+                    <motion.div
+                      className="bg-gradient-to-r from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/10 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-900/30"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      whileHover={{
+                        y: -5,
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                      }}
+                    >
                       <div className="flex items-center gap-3 mb-4">
                         <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
-                          <Lightbulb size={18} className="text-indigo-600 dark:text-indigo-400" />
+                          <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <h3 className="font-medium text-indigo-700 dark:text-indigo-300">Improvement Suggestions</h3>
                       </div>
-                      <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
-                        <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200 custom-scrollbar max-h-96 overflow-y-auto pr-2">
-                          {data.suggestions?.suggestion}
-                        </pre>
-                      </div>
-                    </div>
+
+                      {suggestions.length > 0 ? (
+                        <div className="space-y-3">
+                          {suggestions.map((suggestion, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.4, delay: index * 0.1 }}
+                              className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                            >
+                              <div className="mt-0.5">
+                                <CheckSquare size={18} className="text-emerald-500 dark:text-emerald-400" />
+                              </div>
+                              <p className="text-gray-800 dark:text-gray-200">{suggestion}</p>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/30">
+                          <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200 custom-scrollbar max-h-96 overflow-y-auto pr-2">
+                            {data.suggestions?.suggestion || "No suggestions available."}
+                          </pre>
+                        </div>
+                      )}
+                    </motion.div>
                   </motion.div>
                 )}
               </motion.div>
