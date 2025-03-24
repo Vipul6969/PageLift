@@ -215,10 +215,7 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>SEO Analyzer Dashboard</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+      
 
       <main className="min-h-screen bg-gradient-to-br from-sky-50/50 via-white to-violet-50/50 dark:from-slate-950 dark:via-gray-900 dark:to-sky-950/30 text-gray-900 dark:text-white transition-colors duration-300">
         {/* Decorative Elements */}
@@ -265,7 +262,7 @@ export default function Home() {
                   SEO Analyzer
                 </motion.h1>
                 <motion.p
-                  className="text-gray-600 dark:text-gray-300 mt-1"
+                  className="text-gray-600 dark:text-gray-300 mt-2"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
