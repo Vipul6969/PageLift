@@ -21,6 +21,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Legend,
 } from "recharts";
 import {
   Copy,
@@ -31,6 +34,7 @@ import {
   ExternalLink,
   AlertCircle,
   BarChart2,
+  Target,
   FileText,
   Users,
   Lightbulb,
@@ -344,6 +348,13 @@ export default function Home() {
               <Search className="text-sky-500" size={24} />
               Analyze Your Website
             </motion.h2>
+            <div className="mb-5">
+              <span className="text-gray-500 dark:text-gray-400 mb-6">
+                Purpose of this tool is to analyze your website's SEO
+                performance and provide actionable insights to improve your
+                search engine rankings.
+              </span>
+            </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div
@@ -479,129 +490,43 @@ export default function Home() {
 
             {/* Comparison Info */}
             {url && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-                className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-              >
-                <Info size={14} />
-                <span>
-                  Analyzing:{" "}
-                  <span className="text-sky-600 dark:text-sky-400 font-medium">
-                    {url}
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 }}
+                  className="mt-4 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+                >
+                  <Info size={14} />
+                  <span>
+                    Analyzing:{" "}
+                    <span className="text-sky-600 dark:text-sky-400 font-medium">
+                      {url} |
+                      {data?.purpose && (
+                        <span className="text-xs text-sky-600 dark:text-sky-400 font-medium">
+                         
+                          
+                          {formatPurposeText(
+                            data.purpose.charAt(0).toUpperCase() +
+                              data.purpose.slice(1)
+                          )}
+                        </span>
+                      )}
+                    </span>
+                    {competitorUrl && (
+                      <>
+                        {" "}
+                        vs.{" "}
+                        <span className="text-sky-600 dark:text-sky-400 font-medium">
+                          {competitorUrl}
+                        </span>
+                      </>
+                    )}
                   </span>
-                  {competitorUrl && (
-                    <>
-                      {" "}
-                      vs.{" "}
-                      <span className="text-sky-600 dark:text-sky-400 font-medium">
-                        {competitorUrl}
-                      </span>
-                    </>
-                  )}
-                </span>
-              </motion.div>
+                </motion.div>
+              </>
             )}
           </motion.div>
-
-          {/* <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-16 bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700/50"
-          >
-            <motion.h2
-              className="text-2xl font-semibold mb-6 flex items-center gap-3 text-sky-600 dark:text-sky-300"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
-              <Search className="text-sky-500" size={24} />
-              Analyze Your Website
-            </motion.h2>
-            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
-              <motion.div
-                className="flex-1 relative"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-                  <Globe size={20} />
-                </div>
-                <input
-                  type="url"
-                  placeholder="Enter a website URL (e.g., https://example.com)"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  required
-                  className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
-                />
-              </motion.div>
-
-              <motion.div
-                className="flex-1 relative"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-                  <Users size={20} />
-                </div>
-                <input
-                  type="url"
-                  placeholder="Enter competitor website URL (optional)"
-                  value={competitorUrl}
-                  onChange={(e) => setCompetitorUrl(e.target.value)}
-                  className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
-                />
-              </motion.div>
-
-              <motion.button
-                type="submit"
-                disabled={loading}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white font-semibold px-8 py-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[180px]"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search size={18} />
-                    <span>Analyze</span>
-                  </>
-                )}
-              </motion.button>
-            </form>
-
-            {url && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-                className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-              >
-                <Info size={14} />
-                <span>
-                  Analyzing: <span className="text-sky-600 dark:text-sky-400 font-medium">{url}</span>
-                  {competitorUrl && (
-                    <>
-                      {" "}
-                      vs. <span className="text-sky-600 dark:text-sky-400 font-medium">{competitorUrl}</span>
-                    </>
-                  )}
-                </span>
-              </motion.div>
-            )}
-          </motion.div> */}
 
           {/* Error */}
           <AnimatePresence>
@@ -672,6 +597,16 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+
+                  {activeSection === "overview" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="px-6 pb-6"
+                    ></motion.div>
+                  )}
 
                   {activeSection === "overview" && (
                     <motion.div
@@ -781,6 +716,94 @@ export default function Home() {
                               : data.user?.seoScore > 40
                               ? "Average"
                               : "Needs Improvement"}
+                          </div>
+                        </motion.div>
+
+                        {/* Chart Card */}
+                        <motion.div
+                          className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.5, delay: 0.5 }}
+                          whileHover={{
+                            y: -5,
+                            boxShadow:
+                              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                          }}
+                        >
+                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <BarChart2 className="text-sky-500" size={20} />
+                            SEO Score Comparison
+                          </h3>
+                          <div className="h-[220px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <defs>
+                                  {COLORS.map((color, index) => (
+                                    <linearGradient
+                                      key={index}
+                                      id={`colorGradient${index}`}
+                                      x1="0"
+                                      y1="0"
+                                      x2="0"
+                                      y2="1"
+                                    >
+                                      <stop
+                                        offset="0%"
+                                        stopColor={color}
+                                        stopOpacity={0.8}
+                                      />
+                                      <stop
+                                        offset="100%"
+                                        stopColor={color}
+                                        stopOpacity={0.9}
+                                      />
+                                    </linearGradient>
+                                  ))}
+                                </defs>
+                                <Pie
+                                  data={chartData}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={70}
+                                  // label={({ name, value }) =>
+                                  //   `${name}: ${value}`
+                                  // }
+                                  labelLine={false}
+                                  animationDuration={1000}
+                                  animationBegin={200}
+                                >
+                                  {chartData.map((entry, index) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={`url(#colorGradient${index})`}
+                                      className="drop-shadow-md"
+                                    />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: darkMode
+                                      ? "#1e293b"
+                                      : "white",
+                                    borderRadius: "0.75rem",
+                                    border: "none",
+                                    boxShadow:
+                                      "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                    color: darkMode ? "white" : "black",
+                                    padding: "12px 16px",
+                                  }}
+                                />
+                                <Legend
+                                  layout="horizontal"
+                                  verticalAlign="bottom"
+                                  align="center"
+                                  wrapperStyle={{ paddingTop: "10px" }}
+                                />
+                              </PieChart>
+                            </ResponsiveContainer>
                           </div>
                         </motion.div>
 
