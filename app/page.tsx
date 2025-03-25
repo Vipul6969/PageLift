@@ -515,25 +515,25 @@ export default function Home() {
                     )}
                   </span>
                 </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                  className="mt-4 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-                >
-                  <Star size={14} />
-                  Based on:
-                  {data?.purpose && (
-                    <span className="px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-900 text-sky-600 dark:text-sky-400 font-medium text-sm">
-                      
-                      {formatPurposeText(
-                        data.purpose.charAt(0).toUpperCase() +
-                          data.purpose.slice(1)
-                      )}
-                    </span>
-                  )}
-                </motion.div>
+                {data ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }}
+                    className="mt-4 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    <Star size={14} />
+                    Based on:
+                    {data?.purpose && (
+                      <span className="px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-900 text-sky-600 dark:text-sky-400 font-medium text-sm">
+                        {formatPurposeText(
+                          data.purpose.charAt(0).toUpperCase() +
+                            data.purpose.slice(1)
+                        )}
+                      </span>
+                    )}
+                  </motion.div>
+                ) : null}
               </>
             )}
           </motion.div>
