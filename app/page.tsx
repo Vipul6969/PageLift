@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect, useRef } from "react";
 import {
   motion,
@@ -12,11 +11,8 @@ import {
   useInView,
 } from "framer-motion";
 import {
-  PieChart,
-  Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   RadialBarChart,
   RadialBar,
@@ -34,7 +30,6 @@ import {
   Search,
   ExternalLink,
   AlertCircle,
-  Target,
   BarChart2,
   FileText,
   Users,
@@ -47,12 +42,11 @@ import {
   Award,
   CheckSquare,
   Info,
-  ArrowRight,
   Sparkles,
-  TrendingUp,
-  Gauge
+  Gauge,
+  Plus,
+  X,
 } from "lucide-react";
-import Head from "next/head";
 
 // Modern color palette
 const COLORS = [
@@ -75,8 +69,10 @@ const GRADIENTS = {
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [competitorUrl, setCompetitorUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [competitorData, setCompetitorData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -84,6 +80,8 @@ export default function Home() {
   const resultsRef = useRef<HTMLDivElement>(null);
   const overviewRef = useRef<HTMLDivElement>(null);
   const isOverviewInView = useInView(overviewRef, { once: true, amount: 0.3 });
+  // const [competitorUrl, setCompetitorUrl] = useState("");
+  const [showCompetitorInput, setShowCompetitorInput] = useState(false);
 
   // Animated values for radial progress
   const scoreProgress = useMotionValue(0);
@@ -93,10 +91,11 @@ export default function Home() {
   const scoreSpring = useSpring(scoreProgress, { stiffness: 100, damping: 30 });
 
   // Mock data for page speed and readability scores
-  const pageSpeedScore = data?.pageSpeed?.performance || 75; // ✅ Extract performance score
+  const pageSpeedScore = data?.pageSpeed?.performance || 75;
+  const competitorPageSpeedScore = competitorData?.pageSpeed?.performance || 75;
 
-  const readabilityScore = data?.readabilityScore || 75
-
+  const readabilityScore = data?.readabilityScore || 75;
+  const competitorReadabilityScore = competitorData?.readabilityScore || 75;
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -122,6 +121,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setData(null);
+    setCompetitorData(null);
     try {
       const res = await fetch(
         `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(url)}`
@@ -131,6 +131,18 @@ export default function Home() {
       setData(result);
       console.log(result);
       setActiveSection("overview");
+
+      if (competitorUrl) {
+        const competitorRes = await fetch(
+          `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+            competitorUrl
+          )}`
+        );
+        if (!competitorRes.ok)
+          throw new Error("Failed to fetch competitor SEO data");
+        const competitorResult = await competitorRes.json();
+        setCompetitorData(competitorResult);
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
     } finally {
@@ -230,12 +242,19 @@ export default function Home() {
     { name: "Page Speed", value: pageSpeedScore, fill: "#10B981" }, // ✅ Now it's a number
     { name: "Readability", value: readabilityScore, fill: "#8B5CF6" },
   ];
-  
+
+  const competitorPerformanceData = [
+    {
+      name: "SEO Score",
+      value: competitorData?.user?.seoScore || 0,
+      fill: "#0EA5E9",
+    },
+    { name: "Page Speed", value: competitorPageSpeedScore, fill: "#10B981" }, // ✅ Now it's a number
+    { name: "Readability", value: competitorReadabilityScore, fill: "#8B5CF6" },
+  ];
 
   return (
     <>
-      
-
       <main className="min-h-screen bg-gradient-to-br from-sky-50/50 via-white to-violet-50/50 dark:from-slate-950 dark:via-gray-900 dark:to-sky-950/30 text-gray-900 dark:text-white transition-colors duration-300">
         {/* Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -309,6 +328,7 @@ export default function Home() {
           </motion.div>
 
           {/* Form */}
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -324,10 +344,183 @@ export default function Home() {
               <Search className="text-sky-500" size={24} />
               Analyze Your Website
             </motion.h2>
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col md:flex-row gap-4"
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div
+                className={`flex ${
+                  showCompetitorInput ? "flex-col gap-4" : "items-center gap-4"
+                }`}
+              >
+                {/* Main URL Input */}
+                <motion.div
+                  className="flex-1 relative"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                    <Globe size={20} />
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="Enter a website URL (e.g., https://example.com)"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    required
+                    className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
+                  />
+                </motion.div>
+
+                {/* Analyze Button (Initially in line) */}
+                {!showCompetitorInput && (
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 
+       text-white font-semibold px-8 py-4 rounded-xl shadow-md transition-all duration-300 
+       hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center 
+       justify-center gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search size={18} />
+                        <span>Analyze</span>
+                      </>
+                    )}
+                  </motion.button>
+                )}
+              </div>
+
+              {/* Add Competitor Button */}
+              {!showCompetitorInput && (
+                <motion.button
+                  type="button"
+                  onClick={() => setShowCompetitorInput(true)}
+                  className="flex items-center gap-2 text-sky-600 dark:text-sky-300 font-medium transition-all duration-200 hover:text-sky-500"
+                >
+                  <Plus size={18} />
+                  Add Competitor
+                </motion.button>
+              )}
+
+              {/* Competitor URL Input */}
+              {showCompetitorInput && (
+                <motion.div
+                  className="flex-1 relative"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                >
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                    <Users size={20} />
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="Enter competitor website URL (optional)"
+                    value={competitorUrl}
+                    onChange={(e) => setCompetitorUrl(e.target.value)}
+                    className="w-full pl-12 pr-10 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
+                  />
+                  {/* Close (X) Icon */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCompetitorInput(false);
+                      setCompetitorUrl(""); // Clear competitor URL
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-all duration-200"
+                  >
+                    <X size={18} />
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Analyze Button (When Competitor is added, move it below the inputs) */}
+              {showCompetitorInput && (
+                <div className="flex justify-end">
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 
+       text-white font-semibold px-8 py-4 rounded-xl shadow-md transition-all duration-300 
+       hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center 
+       justify-center gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span>Comparing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search size={18} />
+                        <span>Compare</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              )}
+            </form>
+
+            {/* Comparison Info */}
+            {url && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+                className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+              >
+                <Info size={14} />
+                <span>
+                  Analyzing:{" "}
+                  <span className="text-sky-600 dark:text-sky-400 font-medium">
+                    {url}
+                  </span>
+                  {competitorUrl && (
+                    <>
+                      {" "}
+                      vs.{" "}
+                      <span className="text-sky-600 dark:text-sky-400 font-medium">
+                        {competitorUrl}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mb-16 bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-gray-100 dark:border-gray-700/50"
+          >
+            <motion.h2
+              className="text-2xl font-semibold mb-6 flex items-center gap-3 text-sky-600 dark:text-sky-300"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
             >
+              <Search className="text-sky-500" size={24} />
+              Analyze Your Website
+            </motion.h2>
+            <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
               <motion.div
                 className="flex-1 relative"
                 initial={{ opacity: 0, y: 10 }}
@@ -346,6 +539,25 @@ export default function Home() {
                   className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
                 />
               </motion.div>
+
+              <motion.div
+                className="flex-1 relative"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                  <Users size={20} />
+                </div>
+                <input
+                  type="url"
+                  placeholder="Enter competitor website URL (optional)"
+                  value={competitorUrl}
+                  onChange={(e) => setCompetitorUrl(e.target.value)}
+                  className="w-full pl-12 pr-5 py-4 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:bg-slate-900/80 dark:text-white transition-all duration-200 text-base"
+                />
+              </motion.div>
+
               <motion.button
                 type="submit"
                 disabled={loading}
@@ -379,14 +591,17 @@ export default function Home() {
               >
                 <Info size={14} />
                 <span>
-                  Analyzing:{" "}
-                  <span className="text-sky-600 dark:text-sky-400 font-medium">
-                    {url}
-                  </span>
+                  Analyzing: <span className="text-sky-600 dark:text-sky-400 font-medium">{url}</span>
+                  {competitorUrl && (
+                    <>
+                      {" "}
+                      vs. <span className="text-sky-600 dark:text-sky-400 font-medium">{competitorUrl}</span>
+                    </>
+                  )}
                 </span>
               </motion.div>
             )}
-          </motion.div>
+          </motion.div> */}
 
           {/* Error */}
           <AnimatePresence>
@@ -413,7 +628,7 @@ export default function Home() {
 
           {/* Results */}
           <AnimatePresence>
-            {data && (
+            {(data || competitorData) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -466,46 +681,7 @@ export default function Home() {
                       transition={{ duration: 0.3 }}
                       className="px-6 pb-6"
                     >
-                      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-                        {/* Purpose Card */}
-                        <motion.div
-                          className="bg-gradient-to-br from-sky-50 to-sky-100/50 dark:from-slate-900 dark:to-sky-950/20 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.5, delay: 0.3 }}
-                          whileHover={{
-                            y: -5,
-                            boxShadow:
-                              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                          }}
-                        >
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-sky-100 dark:bg-sky-900/50 p-2 rounded-lg">
-                              <Target
-                                className="text-sky-600 dark:text-sky-400"
-                                size={20}
-                              />
-                            </div>
-                            <h3 className="font-semibold text-sky-700 dark:text-sky-300">
-                              Purpose
-                            </h3>
-                          </div>
-                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                            {data.purpose ? (
-                              formatPurposeText(
-                                data.purpose.charAt(0).toUpperCase() +
-                                  data.purpose.slice(1)
-                              )
-                            ) : (
-                              <p>
-                                This tool analyzes your website's SEO
-                                performance and provides actionable insights to
-                                improve your search engine rankings.
-                              </p>
-                            )}
-                          </div>
-                        </motion.div>
-
+                      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
                         {/* Score Card */}
                         <motion.div
                           className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-slate-900 dark:to-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/30"
@@ -608,70 +784,219 @@ export default function Home() {
                           </div>
                         </motion.div>
 
-                        {/* Chart Card */}
+                        {/* Competitor Score Card */}
+                        {competitorData && (
+                          <motion.div
+                            className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-slate-900 dark:to-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/30"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            whileHover={{
+                              y: -5,
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                            }}
+                          >
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-lg">
+                                <Award
+                                  className="text-emerald-600 dark:text-emerald-400"
+                                  size={20}
+                                />
+                              </div>
+                              <h3 className="font-semibold text-emerald-700 dark:text-emerald-300">
+                                Competitor SEO Score
+                              </h3>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <div className="relative w-32 h-32">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <motion.span className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
+                                    {competitorData.user?.seoScore}
+                                  </motion.span>
+                                </div>
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <RadialBarChart
+                                    innerRadius="70%"
+                                    outerRadius="100%"
+                                    data={[
+                                      {
+                                        name: "Score",
+                                        value: 100,
+                                        fill: "url(#scoreGradient)",
+                                      },
+                                    ]}
+                                    startAngle={90}
+                                    endAngle={-270}
+                                  >
+                                    <defs>
+                                      <linearGradient
+                                        id="scoreGradient"
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                      >
+                                        <stop
+                                          offset="0%"
+                                          stopColor="#10B981"
+                                          stopOpacity={0.8}
+                                        />
+                                        <stop
+                                          offset="100%"
+                                          stopColor="#34D399"
+                                          stopOpacity={0.8}
+                                        />
+                                      </linearGradient>
+                                    </defs>
+                                    <RadialBar
+                                      background
+                                      dataKey="value"
+                                      cornerRadius={30}
+                                      fill="#10B981"
+                                    />
+                                    <RadialBar
+                                      background={false}
+                                      dataKey="value"
+                                      cornerRadius={30}
+                                      fill="url(#scoreGradient)"
+                                      // @ts-ignore - custom prop for animation
+                                      animationBegin={0}
+                                      animationDuration={1500}
+                                      // @ts-ignore - using motion value for custom animation
+                                      data={[
+                                        {
+                                          name: "Score",
+                                          value: scoreSpring.get(),
+                                          fill: "url(#scoreGradient)",
+                                        },
+                                      ]}
+                                    />
+                                  </RadialBarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-center text-sm text-emerald-600 dark:text-emerald-400">
+                              {competitorData.user?.seoScore > 80
+                                ? "Excellent"
+                                : competitorData.user?.seoScore > 60
+                                ? "Good"
+                                : competitorData.user?.seoScore > 40
+                                ? "Average"
+                                : "Needs Improvement"}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Performance Metrics */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                        className="mt-6 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
+                      >
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                          <Gauge className="text-sky-500" size={20} />
+                          Performance Metrics
+                        </h3>
+                        <div className="h-[220px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={performanceData}
+                              margin={{
+                                top: 20,
+                                right: 30,
+                                left: 20,
+                                bottom: 5,
+                              }}
+                            >
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                opacity={0.1}
+                              />
+                              <XAxis dataKey="name" />
+                              <YAxis domain={[0, 100]} />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: darkMode
+                                    ? "#1e293b"
+                                    : "white",
+                                  borderRadius: "0.75rem",
+                                  border: "none",
+                                  boxShadow:
+                                    "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                  color: darkMode ? "white" : "black",
+                                  padding: "12px 16px",
+                                }}
+                              />
+                              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                {performanceData.map((entry, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={entry.fill}
+                                  />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 mt-4">
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              SEO Score
+                            </div>
+                            <div className="text-xl font-bold text-sky-600 dark:text-sky-400">
+                              {data?.user?.seoScore || 0}/100
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              Page Speed
+                            </div>
+                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                              {pageSpeedScore}/100
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              Readability
+                            </div>
+                            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                              {readabilityScore}/100
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {competitorData && (
                         <motion.div
-                          className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.5, delay: 0.5 }}
-                          whileHover={{
-                            y: -5,
-                            boxShadow:
-                              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                          }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.6 }}
+                          className="mt-6 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
                         >
                           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                            <BarChart2 className="text-sky-500" size={20} />
-                            SEO Score Comparison
+                            <Gauge className="text-sky-500" size={20} />
+                            Competitor Performance Metrics
                           </h3>
                           <div className="h-[220px]">
                             <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <defs>
-                                  {COLORS.map((color, index) => (
-                                    <linearGradient
-                                      key={index}
-                                      id={`colorGradient${index}`}
-                                      x1="0"
-                                      y1="0"
-                                      x2="0"
-                                      y2="1"
-                                    >
-                                      <stop
-                                        offset="0%"
-                                        stopColor={color}
-                                        stopOpacity={0.8}
-                                      />
-                                      <stop
-                                        offset="100%"
-                                        stopColor={color}
-                                        stopOpacity={0.9}
-                                      />
-                                    </linearGradient>
-                                  ))}
-                                </defs>
-                                <Pie
-                                  data={chartData}
-                                  dataKey="value"
-                                  nameKey="name"
-                                  cx="50%"
-                                  cy="50%"
-                                  outerRadius={70}
-                                  // label={({ name, value }) =>
-                                  //   `${name}: ${value}`
-                                  // }
-                                  labelLine={false}
-                                  animationDuration={1000}
-                                  animationBegin={200}
-                                >
-                                  {chartData.map((entry, index) => (
-                                    <Cell
-                                      key={`cell-${index}`}
-                                      fill={`url(#colorGradient${index})`}
-                                      className="drop-shadow-md"
-                                    />
-                                  ))}
-                                </Pie>
+                              <BarChart
+                                data={competitorPerformanceData}
+                                margin={{
+                                  top: 20,
+                                  right: 30,
+                                  left: 20,
+                                  bottom: 5,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  opacity={0.1}
+                                />
+                                <XAxis dataKey="name" />
+                                <YAxis domain={[0, 100]} />
                                 <Tooltip
                                   contentStyle={{
                                     backgroundColor: darkMode
@@ -685,206 +1010,47 @@ export default function Home() {
                                     padding: "12px 16px",
                                   }}
                                 />
-                                <Legend
-                                  layout="horizontal"
-                                  verticalAlign="bottom"
-                                  align="center"
-                                  wrapperStyle={{ paddingTop: "10px" }}
-                                />
-                              </PieChart>
+                                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                  {competitorPerformanceData.map(
+                                    (entry, index) => (
+                                      <Cell
+                                        key={`cell-${index}`}
+                                        fill={entry.fill}
+                                      />
+                                    )
+                                  )}
+                                </Bar>
+                              </BarChart>
                             </ResponsiveContainer>
                           </div>
+                          <div className="grid grid-cols-3 gap-4 mt-4">
+                            <div className="flex flex-col items-center">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                SEO Score
+                              </div>
+                              <div className="text-xl font-bold text-sky-600 dark:text-sky-400">
+                                {competitorData?.user?.seoScore || 0}/100
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                Page Speed
+                              </div>
+                              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {competitorPageSpeedScore}/100
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                Readability
+                              </div>
+                              <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                {competitorReadabilityScore}/100
+                              </div>
+                            </div>
+                          </div>
                         </motion.div>
-                      </div>
-
-
-
-  {/* Performance Metrics */}
-  <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.6 }}
-                        className="mt-6 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
-                      >
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                          <Gauge className="text-sky-500" size={20} />
-                          Performance Metrics
-                        </h3>
-                        <div className="h-[220px]">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                              <XAxis dataKey="name" />
-                              <YAxis domain={[0, 100]} />
-                              <Tooltip
-                                contentStyle={{
-                                  backgroundColor: darkMode ? "#1e293b" : "white",
-                                  borderRadius: "0.75rem",
-                                  border: "none",
-                                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                                  color: darkMode ? "white" : "black",
-                                  padding: "12px 16px",
-                                }}
-                              />
-                              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                {performanceData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 mt-4">
-                          <div className="flex flex-col items-center">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">SEO Score</div>
-                            <div className="text-xl font-bold text-sky-600 dark:text-sky-400">
-                              {data?.user?.seoScore || 0}/100
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Page Speed</div>
-                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                              {pageSpeedScore}/100
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Readability</div>
-                            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                              {readabilityScore}/100
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-
-
-                    </motion.div>
-                  )}
-                </motion.div>
-
-                {/* Competitors Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
-                >
-                  <div
-                    className="p-6 cursor-pointer flex justify-between items-center"
-                    onClick={() => toggleSection("competitors")}
-                  >
-                    <h2 className="text-xl font-semibold flex items-center gap-3 text-sky-600 dark:text-sky-300">
-                      <div className="bg-sky-100 dark:bg-sky-900/30 p-2 rounded-lg">
-                        <Users
-                          className="text-sky-600 dark:text-sky-400"
-                          size={22}
-                        />
-                      </div>
-                      Competitor Analysis
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
-                        {activeSection === "competitors"
-                          ? "Hide details"
-                          : "Show details"}
-                      </span>
-                      <div className="text-gray-400">
-                        {activeSection === "competitors" ? (
-                          <ChevronUp size={20} />
-                        ) : (
-                          <ChevronDown size={20} />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {activeSection === "competitors" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-6 pb-6"
-                    >
-                      {/* Competitor Cards */}
-                      <div className="grid gap-6 md:grid-cols-2">
-                        {data.competitors.map((comp: any, idx: number) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: idx * 0.1 }}
-                            className="bg-gradient-to-br from-white to-sky-50/30 dark:from-slate-900 dark:to-sky-950/10 rounded-2xl border border-sky-100 dark:border-sky-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-                            whileHover={{
-                              y: -5,
-                              boxShadow:
-                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                            }}
-                          >
-                            <div className="bg-gradient-to-r from-sky-500 to-violet-500 h-2"></div>
-                            <div className="p-6">
-                              <div className="flex items-start gap-3 mb-4">
-                                <div className="bg-sky-100 dark:bg-sky-900/50 p-2 rounded-lg">
-                                  <Users
-                                    size={18}
-                                    className="text-sky-600 dark:text-sky-400"
-                                  />
-                                </div>
-                                <div>
-                                  <h3 className="font-medium text-gray-900 dark:text-white">
-                                    {extractKeywordFromUrl(comp?.url) ||
-                                      `Competitor ${idx + 1}`}
-                                  </h3>
-
-                                  <a
-                                    href={comp.url}
-                                    className="text-sky-500 text-sm hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1 truncate"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <span className="truncate max-w-[200px]">
-                                      {comp.url}
-                                    </span>
-                                    <ExternalLink size={12} />
-                                  </a>
-                                </div>
-                              </div>
-
-                              <div className="space-y-4">
-                                <div>
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                      SEO Score
-                                    </span>
-                                    <span className="font-semibold text-sky-600 dark:text-sky-400">
-                                      {comp.seoScore?.score || "0"}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
-                                    <motion.div
-                                      className="bg-gradient-to-r from-sky-500 to-violet-500 h-2.5 rounded-full"
-                                      initial={{ width: 0 }}
-                                      animate={{
-                                        width: `${comp.seoScore?.score || 0}%`,
-                                      }}
-                                      transition={{ duration: 1, delay: 0.5 }}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                                  <span className="text-sm text-gray-600 dark:text-gray-400 block mb-2">
-                                    Explanation:
-                                  </span>
-                                  <p className="text-sm text-gray-800 dark:text-gray-200">
-                                    {comp.seoScore?.explanation ||
-                                      "No explanation provided."}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
+                      )}
                     </motion.div>
                   )}
                 </motion.div>
@@ -956,6 +1122,30 @@ export default function Home() {
                           </div>
                         </motion.div>
 
+                        {competitorData && (
+                          <motion.div
+                            className="bg-gradient-to-r from-sky-50 to-sky-100/30 dark:from-slate-900 dark:to-sky-950/10 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                            whileHover={{
+                              y: -5,
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                            }}
+                          >
+                            <h3 className="font-medium text-sky-700 dark:text-sky-300 mb-3 flex items-center gap-2">
+                              <FileText size={16} className="text-sky-500" />
+                              Competitor Title
+                            </h3>
+                            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
+                              <p className="text-gray-800 dark:text-gray-200 font-medium">
+                                {competitorData.user?.metadata?.title || "N/A"}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
+
                         <motion.div
                           className="bg-gradient-to-r from-sky-50 to-sky-100/30 dark:from-slate-900 dark:to-sky-950/10 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
                           initial={{ opacity: 0, x: -20 }}
@@ -978,6 +1168,31 @@ export default function Home() {
                             </p>
                           </div>
                         </motion.div>
+
+                        {competitorData && (
+                          <motion.div
+                            className="bg-gradient-to-r from-sky-50 to-sky-100/30 dark:from-slate-900 dark:to-sky-950/10 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            whileHover={{
+                              y: -5,
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                            }}
+                          >
+                            <h3 className="font-medium text-sky-700 dark:text-sky-300 mb-3 flex items-center gap-2">
+                              <FileText size={16} className="text-sky-500" />
+                              Competitor Description
+                            </h3>
+                            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
+                              <p className="text-gray-800 dark:text-gray-200">
+                                {competitorData.user?.metadata?.description ||
+                                  "No description provided."}
+                              </p>
+                            </div>
+                          </motion.div>
+                        )}
 
                         <motion.div
                           className="bg-gradient-to-r from-sky-50 to-sky-100/30 dark:from-slate-900 dark:to-sky-950/10 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
@@ -1035,6 +1250,66 @@ export default function Home() {
                             )}
                           </div>
                         </motion.div>
+
+                        {competitorData && (
+                          <motion.div
+                            className="bg-gradient-to-r from-sky-50 to-sky-100/30 dark:from-slate-900 dark:to-sky-950/10 p-6 rounded-2xl border border-sky-100 dark:border-sky-900/30"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                            whileHover={{
+                              y: -5,
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                            }}
+                          >
+                            <h3 className="font-medium text-sky-700 dark:text-sky-300 mb-3 flex items-center gap-2">
+                              <LinkIcon size={16} className="text-sky-500" />
+                              Competitor Links
+                            </h3>
+                            <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
+                              {competitorData.user?.metadata?.links?.length >
+                              0 ? (
+                                <ul className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                  {competitorData.user?.metadata?.links?.map(
+                                    (link: string, index: number) => (
+                                      <motion.li
+                                        key={index}
+                                        className="flex items-center gap-2 group"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                          duration: 0.3,
+                                          delay: 0.1 * index,
+                                        }}
+                                        whileHover={{ x: 5 }}
+                                      >
+                                        <div className="bg-sky-100 dark:bg-sky-900/30 p-1.5 rounded-lg group-hover:bg-sky-200 dark:group-hover:bg-sky-800/30 transition-colors">
+                                          <ExternalLink
+                                            size={14}
+                                            className="text-sky-600 dark:text-sky-400"
+                                          />
+                                        </div>
+                                        <a
+                                          href={link}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 transition-colors truncate text-sm"
+                                        >
+                                          {link}
+                                        </a>
+                                      </motion.li>
+                                    )
+                                  )}
+                                </ul>
+                              ) : (
+                                <p className="text-gray-500 dark:text-gray-400">
+                                  No links found
+                                </p>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
                       </div>
                     </motion.div>
                   )}
