@@ -20,6 +20,11 @@ import {
   ResponsiveContainer,
   RadialBarChart,
   RadialBar,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
 } from "recharts";
 import {
   Copy,
@@ -45,6 +50,7 @@ import {
   ArrowRight,
   Sparkles,
   TrendingUp,
+  Gauge
 } from "lucide-react";
 import Head from "next/head";
 
@@ -85,6 +91,12 @@ export default function Home() {
     Math.round(value)
   );
   const scoreSpring = useSpring(scoreProgress, { stiffness: 100, damping: 30 });
+
+  // Mock data for page speed and readability scores
+  const pageSpeedScore = data?.pageSpeed?.performance || 75; // ✅ Extract performance score
+
+  const readabilityScore = data?.readabilityScore || 75
+
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -212,6 +224,13 @@ export default function Home() {
       </p>
     ));
   };
+
+  const performanceData = [
+    { name: "SEO Score", value: data?.user?.seoScore || 0, fill: "#0EA5E9" },
+    { name: "Page Speed", value: pageSpeedScore, fill: "#10B981" }, // ✅ Now it's a number
+    { name: "Readability", value: readabilityScore, fill: "#8B5CF6" },
+  ];
+  
 
   return (
     <>
@@ -677,6 +696,67 @@ export default function Home() {
                           </div>
                         </motion.div>
                       </div>
+
+
+
+  {/* Performance Metrics */}
+  <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                        className="mt-6 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
+                      >
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                          <Gauge className="text-sky-500" size={20} />
+                          Performance Metrics
+                        </h3>
+                        <div className="h-[220px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={performanceData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                              <XAxis dataKey="name" />
+                              <YAxis domain={[0, 100]} />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: darkMode ? "#1e293b" : "white",
+                                  borderRadius: "0.75rem",
+                                  border: "none",
+                                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                  color: darkMode ? "white" : "black",
+                                  padding: "12px 16px",
+                                }}
+                              />
+                              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                {performanceData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 mt-4">
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">SEO Score</div>
+                            <div className="text-xl font-bold text-sky-600 dark:text-sky-400">
+                              {data?.user?.seoScore || 0}/100
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">Page Speed</div>
+                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                              {pageSpeedScore}/100
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">Readability</div>
+                            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                              {readabilityScore}/100
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+
+
                     </motion.div>
                   )}
                 </motion.div>
