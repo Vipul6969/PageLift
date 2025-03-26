@@ -28,8 +28,10 @@ import {
 import {
   Copy,
   Download,
+  ArrowRight,
   Sun,
   Moon,
+  Badge,
   Search,
   ExternalLink,
   AlertCircle,
@@ -52,6 +54,7 @@ import {
   Star,
   X,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 // Modern color palette
 const COLORS = [
@@ -86,6 +89,10 @@ export default function Home() {
   const overviewRef = useRef<HTMLDivElement>(null);
   const isOverviewInView = useInView(overviewRef, { once: true, amount: 0.3 });
   // const [competitorUrl, setCompetitorUrl] = useState("");
+  const [expandedSuggestion, setExpandedSuggestion] = useState<number | null>(
+    null
+  );
+
   const [showCompetitorInput, setShowCompetitorInput] = useState(false);
 
   // Animated values for radial progress
@@ -257,6 +264,80 @@ export default function Home() {
     { name: "Page Speed", value: competitorPageSpeedScore, fill: "#10B981" }, // ✅ Now it's a number
     { name: "Readability", value: competitorReadabilityScore, fill: "#8B5CF6" },
   ];
+
+  const processContent = () => {
+    if (!data?.suggestions?.suggestion) return { intro: "", items: [] };
+
+    // Clean up the text and remove any quotes at the beginning and end
+    const fullText = data.suggestions.suggestion.replace(/^"|"$/g, "");
+
+    // Extract the introduction (text before the first numbered point)
+    const introEndIndex = fullText.indexOf("\n\n1.");
+    const intro =
+      introEndIndex > -1 ? fullText.substring(0, introEndIndex).trim() : "";
+
+    // Extract each numbered suggestion
+    const items = [];
+    const suggestionRegex =
+      /\n\n(\d+)\.\s+\*\*(.*?)\*\*:([\s\S]*?)(?=\n\n\d+\.|$)/g;
+
+    let match;
+    while ((match = suggestionRegex.exec(fullText + "\n\n")) !== null) {
+      const number = match[1];
+      // Remove all markdown formatting from title
+      const title = match[2].replace(/\*\*/g, "").trim();
+
+      // Process the content to extract description and actionable step
+      const content = match[3].trim();
+
+      // Extract actionable step if present
+      const actionStepIndex = content.indexOf("**Actionable Step:**");
+      let description = content;
+      let actionableStep = "";
+
+      if (actionStepIndex > -1) {
+        description = content.substring(0, actionStepIndex).trim();
+        actionableStep = content
+          .substring(actionStepIndex + "**Actionable Step:**".length)
+          .trim();
+      }
+
+      // Remove any remaining markdown formatting
+      description = description.replace(/\*\*/g, "").trim();
+      actionableStep = actionableStep.replace(/\*\*/g, "").trim();
+
+      items.push({
+        number,
+        title,
+        description,
+        actionableStep,
+      });
+    }
+
+    // Extract competitor analysis if present
+    const competitorAnalysisIndex = fullText.indexOf("Competitor Analysis:");
+    let competitorAnalysis = "";
+
+    if (competitorAnalysisIndex > -1) {
+      competitorAnalysis = fullText
+        .substring(competitorAnalysisIndex + "Competitor Analysis:".length)
+        .trim();
+      // Remove any markdown formatting
+      competitorAnalysis = competitorAnalysis.replace(/\*\*/g, "").trim();
+    }
+
+    return { intro, items, competitorAnalysis };
+  };
+
+  const toggleExpand = (index: number) => {
+    if (expandedSuggestion === index) {
+      setExpandedSuggestion(null);
+    } else {
+      setExpandedSuggestion(index);
+    }
+  };
+
+  const { intro, items, competitorAnalysis } = processContent();
 
   return (
     <>
@@ -1411,76 +1492,19 @@ export default function Home() {
                             />
                           </div>
                           <h3 className="font-medium text-sky-700 dark:text-sky-300">
-                            Improvement Suggestions
+                            SEO Improvement Suggestions
                           </h3>
                         </div>
-                        {data.suggestions?.suggestion ? (
-                          <>
-                            {/* Heading */}
-                            <p className="text-gray-700 dark:text-gray-300 text-base mb-4 leading-relaxed">
-                              {data.suggestions.suggestion
-                                .split(/\n\n[1-5]\./)[0]
-                                .replace(/^"|"$/g, "")}
-                            </p>
 
-                            {/* Suggestions */}
-                            <div className="space-y-4">
-                              {data.suggestions.suggestion
-                                .split(/\n\n[1-5]\./)
-                                .slice(1)
-                                .map(
-                                  (
-                                    point: string,
-                                    index: React.Key | null | undefined
-                                  ) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ opacity: 0, x: -20 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{
-                                        duration: 0.4,
-                                        delay:
-                                          typeof index === "number"
-                                            ? index * 0.1
-                                            : 0,
-                                      }}
-                                      className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30 hover:border-sky-300 dark:hover:border-sky-700 transition-colors group"
-                                      whileHover={{
-                                        scale: 1.01,
-                                        boxShadow:
-                                          "0 4px 12px rgba(0, 0, 0, 0.05)",
-                                        backgroundColor: darkMode
-                                          ? "rgba(15, 23, 42, 0.9)"
-                                          : "rgba(255, 255, 255, 0.9)",
-                                      }}
-                                    >
-                                      <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors">
-                                        <CheckSquare
-                                          size={18}
-                                          className="text-emerald-500 dark:text-emerald-400"
-                                        />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">
-                                          {point.trim()}
-                                        </p>
-                                      </div>
-                                    </motion.div>
-                                  )
-                                )}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
-                            <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200 custom-scrollbar max-h-96 overflow-y-auto pr-2 leading-relaxed">
-                              No suggestions available.
-                            </pre>
+                        {intro && (
+                          <div className="text-gray-700 dark:text-gray-300 text-base mb-6 leading-relaxed">
+                            {intro}
                           </div>
                         )}
 
-                        {/* {suggestions.length > 0 ? (
+                        {items.length > 0 ? (
                           <div className="space-y-4">
-                            {suggestions.map((suggestion, index) => (
+                            {items.map((item, index) => (
                               <motion.div
                                 key={index}
                                 initial={{ opacity: 0, x: -20 }}
@@ -1489,37 +1513,97 @@ export default function Home() {
                                   duration: 0.4,
                                   delay: index * 0.1,
                                 }}
-                                className="flex items-start gap-3 bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30 hover:border-sky-300 dark:hover:border-sky-700 transition-colors group"
-                                whileHover={{
-                                  scale: 1.01,
-                                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-                                  backgroundColor: darkMode
-                                    ? "rgba(15, 23, 42, 0.9)"
-                                    : "rgba(255, 255, 255, 0.9)",
-                                }}
+                                className={`bg-white/80 dark:bg-slate-900/80 rounded-xl border ${
+                                  expandedSuggestion === index
+                                    ? "border-sky-300 dark:border-sky-700"
+                                    : "border-sky-100/50 dark:border-sky-900/30 hover:border-sky-300 dark:hover:border-sky-700"
+                                } transition-colors group overflow-hidden`}
                               >
-                                <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors">
-                                  <CheckSquare
-                                    size={18}
-                                    className="text-emerald-500 dark:text-emerald-400"
-                                  />
+                                <div
+                                  className="p-5 cursor-pointer"
+                                  onClick={() => toggleExpand(index)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors flex-shrink-0">
+                                      <CheckSquare
+                                        size={18}
+                                        className="text-emerald-500 dark:text-emerald-400"
+                                      />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex justify-between items-center">
+                                        <h4 className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
+                                          {item.number}. {item.title}
+                                        </h4>
+                                        {expandedSuggestion === index ? (
+                                          <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                                        ) : (
+                                          <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                                        )}
+                                      </div>
+
+                                      {expandedSuggestion !== index && (
+                                        <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex-1">
-                                  <p className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">
-                                    {suggestion}
-                                  </p>
-                                </div>
+
+                                {expandedSuggestion === index && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                  >
+                                    <Separator className="w-full" />
+                                    <div className="p-5 pt-4">
+                                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                        {item.description}
+                                      </div>
+
+                                      {item.actionableStep && (
+                                        <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <ArrowRight
+                                              size={16}
+                                              className="text-blue-600 dark:text-blue-400"
+                                            />
+                                            <h5 className="text-blue-700 dark:text-blue-300 font-medium">
+                                              Actionable Step
+                                            </h5>
+                                          </div>
+                                          <p className="text-gray-700 dark:text-gray-300 pl-6">
+                                            {item.actionableStep}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
                               </motion.div>
                             ))}
                           </div>
                         ) : (
                           <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
-                            <pre className="whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200 custom-scrollbar max-h-96 overflow-y-auto pr-2 leading-relaxed">
-                              {data.suggestions?.suggestion ||
-                                "No suggestions available."}
-                            </pre>
+                            <p className="text-gray-800 dark:text-gray-200">
+                              No suggestions available.
+                            </p>
                           </div>
-                        )} */}
+                        )}
+
+                        {competitorAnalysis && (
+                          <div className="mt-6 pt-6 border-t border-sky-100/50 dark:border-sky-900/30">
+                            <h4 className="text-gray-800 dark:text-gray-200 font-semibold mb-3">
+                              Competitor Analysis
+                            </h4>
+                            <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                              {competitorAnalysis}
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     </motion.div>
                   )}
