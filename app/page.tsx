@@ -269,7 +269,7 @@ export default function Home() {
     if (!data?.suggestions?.suggestion) return { intro: "", items: [] };
 
     // Clean up the text and remove any quotes at the beginning and end
-    const fullText = data.suggestions.suggestion.replace(/^"|"$/g, "");
+    const fullText = data?.suggestions?.suggestion.replace(/^"|"$/g, "");
 
     // Extract the introduction (text before the first numbered point)
     const introEndIndex = fullText.indexOf("\n\n1.");
@@ -1502,7 +1502,7 @@ export default function Home() {
                           </div>
                         )}
 
-                        {items.length > 0 ? (
+                        {items?.length > 0 ? (
                           <div className="space-y-4">
                             {items.map((item, index) => (
                               <motion.div
