@@ -689,7 +689,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {activeSection === "overview" && (
+                  {/* {activeSection === "overview" && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -697,7 +697,7 @@ export default function Home() {
                       transition={{ duration: 0.3 }}
                       className="px-6 pb-6"
                     ></motion.div>
-                  )}
+                  )} */}
 
                   {activeSection === "overview" && (
                     <motion.div
@@ -1165,6 +1165,176 @@ export default function Home() {
                           </div>
                         </motion.div>
                       )}
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="bg-white dark:bg-slate-800/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700/50 overflow-hidden"
+                >
+                  {/* Section Header */}
+                  <div
+                    className="p-6 cursor-pointer flex justify-between items-center"
+                    onClick={() => toggleSection("competitors")}
+                  >
+                    <h2 className="text-xl font-semibold flex items-center gap-3 text-sky-600 dark:text-sky-300">
+                      <div className="bg-sky-100 dark:bg-sky-900/30 p-2 rounded-lg">
+                        <Users
+                          className="text-sky-600 dark:text-sky-400"
+                          size={22}
+                        />
+                      </div>
+                      Competitor Analysis
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                        {activeSection === "competitors"
+                          ? "Hide details"
+                          : "Show details"}
+                      </span>
+                      <div className="text-gray-400">
+                        {activeSection === "competitors" ? (
+                          <ChevronUp size={20} />
+                        ) : (
+                          <ChevronDown size={20} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Competitor Cards */}
+                  {activeSection === "competitors" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="px-6 pb-6"
+                    >
+                      <div className="grid gap-6 md:grid-cols-2">
+                        {data.competitors.map(
+                          (
+                            comp: {
+                              url:
+                                | string
+                                | number
+                                | bigint
+                                | boolean
+                                | React.ReactElement<
+                                    unknown,
+                                    string | React.JSXElementConstructor<any>
+                                  >
+                                | Iterable<React.ReactNode>
+                                | Promise<
+                                    | string
+                                    | number
+                                    | bigint
+                                    | boolean
+                                    | React.ReactPortal
+                                    | React.ReactElement<
+                                        unknown,
+                                        | string
+                                        | React.JSXElementConstructor<any>
+                                      >
+                                    | Iterable<React.ReactNode>
+                                    | null
+                                    | undefined
+                                  >
+                                | null
+                                | undefined;
+                              seoScore: { score: any; explanation: any };
+                            },
+                            idx: React.Key | null | undefined
+                          ) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{
+                                duration: 0.4,
+                                delay: (Number(idx) || 0) * 0.1,
+                              }}
+                              className="bg-gradient-to-br from-white to-sky-50/30 dark:from-slate-900 dark:to-sky-950/10 rounded-2xl border border-sky-100 dark:border-sky-900/30 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                              whileHover={{
+                                y: -5,
+                                boxShadow:
+                                  "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                              }}
+                            >
+                              <div className="bg-gradient-to-r from-sky-500 to-violet-500 h-2"></div>
+                              <div className="p-6">
+                                <div className="flex items-start gap-3 mb-4">
+                                  <div className="bg-sky-100 dark:bg-sky-900/50 p-2 rounded-lg">
+                                    <Users
+                                      size={18}
+                                      className="text-sky-600 dark:text-sky-400"
+                                    />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-medium text-gray-900 dark:text-white">
+                                      {" "}
+                                      {typeof comp?.url === "string"
+                                        ? extractKeywordFromUrl(comp.url)
+                                        : `Competitor ${Number(idx ?? 0) + 1}`}
+                                    </h3>
+                                    <a
+                                      href={typeof comp.url === "string" ? comp.url : undefined} // Ensure href is a string
+                                      className="text-sky-500 text-sm hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1 truncate"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <span className="truncate max-w-[200px]">
+                                        {comp.url}
+                                      </span>
+                                      <ExternalLink size={12} />
+                                    </a>
+                                  </div>
+                                </div>
+
+                                {/* SEO Score Section */}
+                                <div className="space-y-4">
+                                  <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                                        SEO Score
+                                      </span>
+                                      <span className="font-semibold text-sky-600 dark:text-sky-400">
+                                        {comp.seoScore?.score || "0"}
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                                      <motion.div
+                                        className="bg-gradient-to-r from-sky-500 to-violet-500 h-2.5 rounded-full"
+                                        initial={{ width: 0 }}
+                                        animate={{
+                                          width: `${
+                                            comp.seoScore?.score || 0
+                                          }%`,
+                                        }}
+                                        transition={{ duration: 1, delay: 0.5 }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Explanation Section */}
+                                  <div className="bg-white/80 dark:bg-slate-900/80 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400 block mb-2">
+                                      Explanation:
+                                    </span>
+                                    <p className="text-sm text-gray-800 dark:text-gray-200">
+                                      {comp.seoScore?.explanation ||
+                                        "No explanation provided."}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        )}
+                      </div>
                     </motion.div>
                   )}
                 </motion.div>
