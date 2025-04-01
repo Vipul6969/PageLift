@@ -128,32 +128,41 @@ export default function Home() {
     }
   }, [data, scoreProgress]);
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setData(null);
     setCompetitorData(null);
+    
     try {
-      const res = await fetch(
-        `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(url)}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch SEO data");
-      const result = await res.json();
-      setData(result);
-      console.log(result);
+      // Start fetching the user SEO data
+      const userSeoUrl = `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(url)}`;
+      const userRequest = fetch(userSeoUrl);
+  
+      // Fetch competitor SEO data if competitorUrl exists
+      const competitorRequest = competitorUrl
+        ? fetch(`http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(competitorUrl)}`)
+        : null;
+  
+      // Wait for both the user and competitor requests to resolve (in parallel)
+      const [userRes, competitorRes] = await Promise.all([userRequest, competitorRequest]);
+  
+      // Handle user SEO data
+      if (!userRes.ok) throw new Error("Failed to fetch SEO data");
+      const userResult = await userRes.json();
+      setData(userResult);
+      console.log(userResult);
       setActiveSection("overview");
-
-      if (competitorUrl) {
-        const competitorRes = await fetch(
-          `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
-            competitorUrl
-          )}`
-        );
-        if (!competitorRes.ok)
-          throw new Error("Failed to fetch competitor SEO data");
+  
+      // Handle competitor SEO data, if competitor data exists
+      if (competitorRes && competitorRes.ok) {
         const competitorResult = await competitorRes.json();
         setCompetitorData(competitorResult);
+      } else if (competitorUrl) {
+        // If competitor URL is provided but the response was not okay
+        throw new Error("Failed to fetch competitor SEO data");
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -161,6 +170,41 @@ export default function Home() {
       setLoading(false);
     }
   };
+  
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setError(null);
+  //   setData(null);
+  //   setCompetitorData(null);
+  //   try {
+  //     const res = await fetch(
+  //       `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(url)}`
+  //     );
+  //     if (!res.ok) throw new Error("Failed to fetch SEO data");
+  //     const result = await res.json();
+  //     setData(result);
+  //     console.log(result);
+  //     setActiveSection("overview");
+
+  //     if (competitorUrl) {
+  //       const competitorRes = await fetch(
+  //         `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+  //           competitorUrl
+  //         )}`
+  //       );
+  //       if (!competitorRes.ok)
+  //         throw new Error("Failed to fetch competitor SEO data");
+  //       const competitorResult = await competitorRes.json();
+  //       setCompetitorData(competitorResult);
+  //     }
+  //   } catch (err: any) {
+  //     setError(err.message || "Something went wrong");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   function extractKeywordFromUrl(url: string): string | null {
     if (!url || typeof url !== "string") {
