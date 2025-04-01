@@ -414,6 +414,8 @@ export default function Home() {
           </motion.div>
 
           {/* Form */}
+          
+          
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -689,16 +691,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* {activeSection === "overview" && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="px-6 pb-6"
-                    ></motion.div>
-                  )} */}
-
                   {activeSection === "overview" && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
@@ -811,92 +803,94 @@ export default function Home() {
                         </motion.div>
 
                         {/* Chart Card */}
-                        <motion.div
-                          className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ duration: 0.5, delay: 0.5 }}
-                          whileHover={{
-                            y: -5,
-                            boxShadow:
-                              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                          }}
-                        >
-                          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
-                            <BarChart2 className="text-sky-500" size={20} />
-                            SEO Score Comparison
-                          </h3>
-                          <div className="h-[220px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <defs>
-                                  {COLORS.map((color, index) => (
-                                    <linearGradient
-                                      key={index}
-                                      id={`colorGradient${index}`}
-                                      x1="0"
-                                      y1="0"
-                                      x2="0"
-                                      y2="1"
-                                    >
-                                      <stop
-                                        offset="0%"
-                                        stopColor={color}
-                                        stopOpacity={0.8}
+                        {!competitorUrl && (
+                          <motion.div
+                            className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                            whileHover={{
+                              y: -5,
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                            }}
+                          >
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                              <BarChart2 className="text-sky-500" size={20} />
+                              SEO Score Comparison
+                            </h3>
+                            <div className="h-[220px]">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <defs>
+                                    {COLORS.map((color, index) => (
+                                      <linearGradient
+                                        key={index}
+                                        id={`colorGradient${index}`}
+                                        x1="0"
+                                        y1="0"
+                                        x2="0"
+                                        y2="1"
+                                      >
+                                        <stop
+                                          offset="0%"
+                                          stopColor={color}
+                                          stopOpacity={0.8}
+                                        />
+                                        <stop
+                                          offset="100%"
+                                          stopColor={color}
+                                          stopOpacity={0.9}
+                                        />
+                                      </linearGradient>
+                                    ))}
+                                  </defs>
+                                  <Pie
+                                    data={chartData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={70}
+                                    // label={({ name, value }) =>
+                                    //   `${name}: ${value}`
+                                    // }
+                                    labelLine={false}
+                                    animationDuration={1000}
+                                    animationBegin={200}
+                                  >
+                                    {chartData.map((entry, index) => (
+                                      <Cell
+                                        key={`cell-${index}`}
+                                        fill={`url(#colorGradient${index})`}
+                                        className="drop-shadow-md"
                                       />
-                                      <stop
-                                        offset="100%"
-                                        stopColor={color}
-                                        stopOpacity={0.9}
-                                      />
-                                    </linearGradient>
-                                  ))}
-                                </defs>
-                                <Pie
-                                  data={chartData}
-                                  dataKey="value"
-                                  nameKey="name"
-                                  cx="50%"
-                                  cy="50%"
-                                  outerRadius={70}
-                                  // label={({ name, value }) =>
-                                  //   `${name}: ${value}`
-                                  // }
-                                  labelLine={false}
-                                  animationDuration={1000}
-                                  animationBegin={200}
-                                >
-                                  {chartData.map((entry, index) => (
-                                    <Cell
-                                      key={`cell-${index}`}
-                                      fill={`url(#colorGradient${index})`}
-                                      className="drop-shadow-md"
-                                    />
-                                  ))}
-                                </Pie>
-                                <Tooltip
-                                  contentStyle={{
-                                    backgroundColor: darkMode
-                                      ? "#1e293b"
-                                      : "white",
-                                    borderRadius: "0.75rem",
-                                    border: "none",
-                                    boxShadow:
-                                      "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                                    color: darkMode ? "white" : "black",
-                                    padding: "12px 16px",
-                                  }}
-                                />
-                                <Legend
-                                  layout="horizontal"
-                                  verticalAlign="bottom"
-                                  align="center"
-                                  wrapperStyle={{ paddingTop: "10px" }}
-                                />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </motion.div>
+                                    ))}
+                                  </Pie>
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: darkMode
+                                        ? "#1e293b"
+                                        : "white",
+                                      borderRadius: "0.75rem",
+                                      border: "none",
+                                      boxShadow:
+                                        "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                      color: darkMode ? "white" : "black",
+                                      padding: "12px 16px",
+                                    }}
+                                  />
+                                  <Legend
+                                    layout="horizontal"
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    wrapperStyle={{ paddingTop: "10px" }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </motion.div>
+                        )}
 
                         {/* Competitor Score Card */}
                         {competitorData && (
@@ -1169,7 +1163,8 @@ export default function Home() {
                   )}
                 </motion.div>
 
-                <motion.div
+
+ {!competitorUrl && ( <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
@@ -1281,7 +1276,11 @@ export default function Home() {
                                         : `Competitor ${Number(idx ?? 0) + 1}`}
                                     </h3>
                                     <a
-                                      href={typeof comp.url === "string" ? comp.url : undefined} // Ensure href is a string
+                                      href={
+                                        typeof comp.url === "string"
+                                          ? comp.url
+                                          : undefined
+                                      } // Ensure href is a string
                                       className="text-sky-500 text-sm hover:text-sky-700 dark:hover:text-sky-300 transition-colors flex items-center gap-1 truncate"
                                       target="_blank"
                                       rel="noopener noreferrer"
@@ -1337,7 +1336,9 @@ export default function Home() {
                       </div>
                     </motion.div>
                   )}
-                </motion.div>
+                </motion.div>)}
+
+               
 
                 {/* Metadata Section */}
                 <motion.div
