@@ -471,7 +471,7 @@ export default function Home() {
 
     try {
       // Start fetching the user SEO data
-      const userSeoUrl = `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+      const userSeoUrl = `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
         url
       )}`;
       const userRequest = fetch(userSeoUrl);
@@ -479,7 +479,7 @@ export default function Home() {
       // Fetch competitor SEO data if competitorUrl exists
       const competitorRequest = competitorUrl
         ? fetch(
-            `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+            `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
               competitorUrl
             )}`
           )
