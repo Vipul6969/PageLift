@@ -472,23 +472,16 @@ export default function Home() {
 
     try {
       // Start fetching the user SEO data
-      // const userSeoUrl = `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
-      //   url
-      // )}`;
-      const userSeoUrl = `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+      const userSeoUrl = `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
         url
       )}`;
+
       const userRequest = fetch(userSeoUrl);
 
       // Fetch competitor SEO data if competitorUrl exists
       const competitorRequest = competitorUrl
-        ? // ? fetch(
-          //     `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
-          //       competitorUrl
-          //     )}`
-          //   )
-          fetch(
-            `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
+        ? fetch(
+            `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
               competitorUrl
             )}`
           )
@@ -840,18 +833,17 @@ export default function Home() {
 
   const currentScore = data?.user?.seoScore || 0;
   const growthPercentage = data?.estimationGrowth || 0;
-  
+
   // Calculate how much the score should grow
   const growthValue = (currentScore * growthPercentage) / 100;
-  
+
   // Add the growth to the current score, but cap it at 100
   const estimatedScore = Math.min(currentScore + growthValue, 100);
-  
+
   const formattedData = [
     { time: "Current", value: currentScore },
     { time: "Estimated", value: estimatedScore },
   ];
-  
 
   // Determine if a section is fullscreen
   const isFullscreen = fullscreenSection !== null;
