@@ -19,12 +19,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  PieChart,
-  Pie,
   Area,
   AreaChart,
-  Legend
+  Legend,
 } from "recharts";
+import { jsPDF } from "jspdf";
 import {
   Copy,
   Download,
@@ -66,28 +65,28 @@ import { Separator } from "@/components/ui/separator";
 
 // Ultra-modern color palette
 const COLORS = {
-  primary: "#6366F1", 
+  primary: "#6366F1",
   primaryLight: "#818CF8",
   primaryDark: "#4F46E5",
-  secondary: "#EC4899", 
+  secondary: "#EC4899",
   secondaryLight: "#F472B6",
   secondaryDark: "#DB2777",
-  accent: "#10B981", 
+  accent: "#10B981",
   accentLight: "#34D399",
   accentDark: "#059669",
-  warning: "#F59E0B", 
+  warning: "#F59E0B",
   warningLight: "#FBBF24",
   warningDark: "#D97706",
-  danger: "#EF4444", 
+  danger: "#EF4444",
   dangerLight: "#F87171",
   dangerDark: "#DC2626",
-  info: "#0EA5E9", 
+  info: "#0EA5E9",
   infoLight: "#38BDF8",
   infoDark: "#0284C7",
-  success: "#22C55E", 
+  success: "#22C55E",
   successLight: "#4ADE80",
   successDark: "#16A34A",
-  neutral: "#6B7280", 
+  neutral: "#6B7280",
   neutralLight: "#9CA3AF",
   neutralDark: "#4B5563",
   background: "#FFFFFF",
@@ -526,7 +525,9 @@ export default function Home() {
         : hostname;
       // Take the domain without TLD (e.g., 'example.com' -> 'example')
       const keyword = cleaned.split(".")[0];
-      return keyword || null;
+      return keyword
+        ? keyword.charAt(0).toUpperCase() + keyword.slice(1)
+        : null;
     } catch (error) {
       // If URL is invalid
       return null;
@@ -534,21 +535,88 @@ export default function Home() {
   }
 
   const handleCopy = () => {
-    if (data) {
-      navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    const formatData = (obj: any, indent = ""): string => {
+      if (obj === null || obj === undefined) return "";
+      if (typeof obj !== "object") return `${obj}`;
+
+      if (Array.isArray(obj)) {
+        return obj
+          .map((item, index) => {
+            if (typeof item === "object" && item !== null) {
+              return `${indent}-\n${formatData(item, indent + "  ")}`;
+            }
+            return `${indent}- ${item}`;
+          })
+          .join("\n");
+      }
+
+      return Object.entries(obj)
+        .map(([key, value]) => {
+          if (typeof value === "object" && value !== null) {
+            return `${indent}${key}:\n${formatData(value, indent + "  ")}`;
+          }
+          return `${indent}${key}: ${value}`;
+        })
+        .join("\n");
+    };
+
+    if (data && typeof data === "object") {
+      const plainText = formatData(data);
+      navigator.clipboard.writeText(plainText);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     }
   };
 
   const handleDownload = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "seo-analysis.json";
-    link.click();
+    const formatData = (obj: any, indent = ""): string => {
+      if (obj === null || obj === undefined) return "";
+      if (typeof obj !== "object") return `${obj}`;
+
+      if (Array.isArray(obj)) {
+        return obj
+          .map((item) => {
+            if (typeof item === "object" && item !== null) {
+              return `${indent}-\n${formatData(item, indent + "  ")}`;
+            }
+            return `${indent}- ${item}`;
+          })
+          .join("\n");
+      }
+
+      return Object.entries(obj)
+        .map(([key, value]) => {
+          if (typeof value === "object" && value !== null) {
+            return `${indent}${key}:\n${formatData(value, indent + "  ")}`;
+          }
+          return `${indent}${key}: ${value}`;
+        })
+        .join("\n");
+    };
+
+    if (data && typeof data === "object") {
+      const doc = new jsPDF();
+      const marginLeft = 10;
+      const marginTop = 10;
+      const lineHeight = 8;
+      const pageHeight = doc.internal.pageSize.height;
+
+      const plainText = formatData(data);
+      const lines = doc.splitTextToSize(plainText, 180); // wraps at 180mm width
+
+      let y = marginTop;
+
+      lines.forEach((line: string | string[]) => {
+        if (y + lineHeight > pageHeight - 10) {
+          doc.addPage();
+          y = marginTop;
+        }
+        doc.text(line, marginLeft, y);
+        y += lineHeight;
+      });
+
+      doc.save("seo-analysis.pdf");
+    }
   };
 
   const toggleSection = (section: string) => {
@@ -893,7 +961,7 @@ export default function Home() {
                   </motion.h2>
                   <div className="mb-5">
                     <span className="text-gray-500 dark:text-gray-400 mb-6">
-                      Purpose of this tool is to analyze your website's SEO
+                      Enter your website's URL to analyze your website's SEO
                       performance and provide actionable insights to improve
                       your search engine rankings.
                     </span>
@@ -1297,8 +1365,120 @@ export default function Home() {
                                   <NeumorphicIcon icon={Radar} color="info" />
                                   SEO Score Comparison
                                 </h3>
-                                <div className="h-[280px]">
+                                <div>
                                   <ResponsiveContainer
+                                    width="100%"
+                                    height={350}
+                                  >
+                                    <BarChart
+                                      layout="vertical"
+                                      data={chartData}
+                                      margin={{
+                                        top: 20,
+                                        right: 30,
+                                        left: 40,
+                                        bottom: 10,
+                                      }}
+                                    >
+                                      {/* Define linear gradients for bar colors */}
+                                      <defs>
+                                        {CHART_COLORS.map((color, index) => (
+                                          <linearGradient
+                                            key={index}
+                                            id={`colorGradient${index}`}
+                                            x1="0"
+                                            y1="0"
+                                            x2="1"
+                                            y2="0"
+                                          >
+                                            <stop
+                                              offset="0%"
+                                              stopColor={color}
+                                              stopOpacity={0.8}
+                                            />
+                                            <stop
+                                              offset="100%"
+                                              stopColor={color}
+                                              stopOpacity={0.9}
+                                            />
+                                          </linearGradient>
+                                        ))}
+                                      </defs>
+
+                                      {/* X-axis - represents values (horizontal) */}
+                                      <XAxis
+                                        type="number"
+                                        domain={[0, 100]}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{
+                                          fill: darkMode ? "white" : "#0f172a",
+                                          fontSize: 12,
+                                          fontWeight: 500,
+                                        }}
+                                      />
+
+                                      {/* Y-axis - represents category labels (vertical) */}
+                                      <YAxis
+                                        type="category"
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{
+                                          fill: darkMode ? "white" : "#0f172a",
+                                          fontSize: 13,
+                                          fontWeight: 600,
+                                        }}
+                                      />
+
+                                      {/* Tooltip with dark/light theme adaptation */}
+                                      <Tooltip
+                                        cursor={{ fill: "transparent" }}
+                                        contentStyle={{
+                                          backgroundColor: darkMode
+                                            ? "#1e293b"
+                                            : "#ffffff",
+                                          borderRadius: "12px",
+                                          border: "none",
+                                          boxShadow:
+                                            "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                                          color: darkMode
+                                            ? "#ffffff"
+                                            : "#000000",
+                                          padding: "12px 16px",
+                                          fontSize: 14,
+                                        }}
+                                      />
+
+                                      {/* Chart Legend */}
+                                      <Legend
+                                        layout="horizontal"
+                                        verticalAlign="bottom"
+                                        align="center"
+                                        wrapperStyle={{
+                                          paddingTop: "10px",
+                                          color: darkMode ? "white" : "#0f172a",
+                                          fontWeight: 500,
+                                        }}
+                                      />
+
+                                      {/* Bars with individual gradient fills */}
+                                      <Bar
+                                        dataKey="value"
+                                        barSize={18}
+                                        radius={[10, 10, 10, 10]} // rounded corners for better aesthetics
+                                      >
+                                        {chartData.map((entry, index) => (
+                                          <Cell
+                                            key={`cell-${index}`}
+                                            fill={`url(#colorGradient${index})`}
+                                          />
+                                        ))}
+                                      </Bar>
+                                    </BarChart>
+                                  </ResponsiveContainer>
+
+                                  {/* <ResponsiveContainer
                                     width="100%"
                                     height="100%"
                                   >
@@ -1370,7 +1550,7 @@ export default function Home() {
                                     wrapperStyle={{ paddingTop: "10px" }}
                                   />
                                     </PieChart>
-                                  </ResponsiveContainer>
+                                  </ResponsiveContainer> */}
                                 </div>
                               </GlassCard>
                             </motion.div>
@@ -2179,14 +2359,11 @@ export default function Home() {
                   </GlassCard>
                 </motion.div>
 
-
-
                 {/* Suggestions Section */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
-                 
                 >
                   <GlassCard className="overflow-hidden">
                     <div
@@ -2201,8 +2378,8 @@ export default function Home() {
                         {!isFullscreen ? (
                           <button
                             onClick={(e) => {
-                              e.stopPropagation()
-                              toggleFullscreen("suggestions")
+                              e.stopPropagation();
+                              toggleFullscreen("suggestions");
                             }}
                             className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
                           >
@@ -2211,8 +2388,8 @@ export default function Home() {
                         ) : (
                           <button
                             onClick={(e) => {
-                              e.stopPropagation()
-                              toggleFullscreen(null)
+                              e.stopPropagation();
+                              toggleFullscreen(null);
                             }}
                             className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
                           >
@@ -2220,138 +2397,145 @@ export default function Home() {
                           </button>
                         )}
                         <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
-                          {activeSection === "suggestions" ? "Hide details" : "Show details"}
+                          {activeSection === "suggestions"
+                            ? "Hide details"
+                            : "Show details"}
                         </span>
                         <div className="text-gray-400">
-                          {activeSection === "suggestions" ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                          {activeSection === "suggestions" ? (
+                            <ChevronUp size={20} />
+                          ) : (
+                            <ChevronDown size={20} />
+                          )}
                         </div>
                       </div>
                     </div>
- 
-                   {activeSection === "suggestions" && (
-                     <motion.div
-                     initial={{ opacity: 0, height: 0 }}
-                     animate={{ opacity: 1, height: "auto" }}
-                     exit={{ opacity: 0, height: 0 }}
-                     transition={{ duration: 0.3 }}
-                     className="px-6 pb-6"
-                     >
-                       <motion.div
-                         initial={{ opacity: 0, y: 20 }}
-                         animate={{ opacity: 1, y: 0 }}
-                         transition={{ duration: 0.5 }}
-                         whileHover={{
-                           y: -5,
-                           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                         }}
-                       >
-                              <GlassCard className="p-6" glowColor="accent">
+
+                    {activeSection === "suggestions" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="px-6 pb-6"
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5 }}
+                          whileHover={{
+                            y: -5,
+                            boxShadow:
+                              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+                          }}
+                        >
+                          <GlassCard className="p-6" glowColor="accent">
                             <div className="flex items-center gap-3 mb-6">
                               <NeumorphicIcon icon={Wand2} color="accent" />
                               <h3 className="font-medium text-emerald-700 dark:text-emerald-300">
                                 SEO Improvement Suggestions
                               </h3>
                             </div>
- 
-                         {intro && (
-                           <div className="text-gray-700 dark:text-gray-300 text-base mb-6 leading-relaxed">
-                             {intro}
-                           </div>
-                         )}
- 
-                         {items?.length > 0 ? (
-                           <div className="space-y-4">
-                             {items.map((item, index) => (
-                            <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{
-                              duration: 0.4,
-                              delay: index * 0.1,
-                            }}
-                            className={`bg-white/80 dark:bg-slate-900/80 rounded-xl border ${
-                              expandedSuggestion === index
-                                ? "border-emerald-300 dark:border-emerald-700"
-                                : "border-emerald-100/50 dark:border-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-700"
-                            } transition-colors group overflow-hidden`}
-                          >
-                                 <div
-                                   className="p-5 cursor-pointer"
-                                   onClick={() => toggleExpand(index)}
-                                 >
-                                   <div className="flex items-start gap-3">
-                                     <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors flex-shrink-0">
-                                       <CheckSquare
-                                         size={18}
-                                         className="text-emerald-500 dark:text-emerald-400"
-                                       />
-                                     </div>
-                                     <div className="flex-1">
-                                       <div className="flex justify-between items-center">
-                                         <h4 className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
-                                           {item.number}. {item.title}
-                                         </h4>
-                                         {expandedSuggestion === index ? (
-                                           <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                                         ) : (
-                                           <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                                         )}
-                                       </div>
- 
-                                       {expandedSuggestion !== index && (
-                                         <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                                           {item.description}
-                                         </p>
-                                       )}
-                                     </div>
-                                   </div>
-                                 </div>
- 
-                                 {expandedSuggestion === index && (
-                                   <motion.div
-                                   initial={{ opacity: 0, height: 0 }}
-                                   animate={{ opacity: 1, height: "auto" }}
-                                   exit={{ opacity: 0, height: 0 }}
-                                   transition={{ duration: 0.3 }}
-                                   >
-                                     <Separator className="w-full" />
-                                     <div className="p-5 pt-4">
-                                       <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                                         {item.description}
-                                       </div>
- 
-                                       {item.actionableStep && (
-                                         <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                                           <div className="flex items-center gap-2 mb-2">
-                                             <ArrowRight
-                                               size={16}
-                                               className="text-blue-600 dark:text-blue-400"
-                                             />
-                                             <h5 className="text-blue-700 dark:text-blue-300 font-medium">
-                                               Actionable Step
-                                             </h5>
-                                           </div>
-                                           <p className="text-gray-700 dark:text-gray-300 pl-6">
-                                             {item.actionableStep}
-                                           </p>
-                                         </div>
-                                       )}
-                                     </div>
-                                   </motion.div>
-                                 )}
-                               </motion.div>
-                             ))}
-                           </div>
-                         ) : (
-                           <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
-                             <p className="text-gray-800 dark:text-gray-200">
-                               No suggestions available.
-                             </p>
-                           </div>
-                         )}
- 
-                         {/* {competitorAnalysis && (
+
+                            {intro && (
+                              <div className="text-gray-700 dark:text-gray-300 text-base mb-6 leading-relaxed">
+                                {intro}
+                              </div>
+                            )}
+
+                            {items?.length > 0 ? (
+                              <div className="space-y-4">
+                                {items.map((item, index) => (
+                                  <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      duration: 0.4,
+                                      delay: index * 0.1,
+                                    }}
+                                    className={`bg-white/80 dark:bg-slate-900/80 rounded-xl border ${
+                                      expandedSuggestion === index
+                                        ? "border-emerald-300 dark:border-emerald-700"
+                                        : "border-emerald-100/50 dark:border-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-700"
+                                    } transition-colors group overflow-hidden`}
+                                  >
+                                    <div
+                                      className="p-5 cursor-pointer"
+                                      onClick={() => toggleExpand(index)}
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <div className="mt-0.5 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/30 transition-colors flex-shrink-0">
+                                          <CheckSquare
+                                            size={18}
+                                            className="text-emerald-500 dark:text-emerald-400"
+                                          />
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="flex justify-between items-center">
+                                            <h4 className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
+                                              {item.number}. {item.title}
+                                            </h4>
+                                            {expandedSuggestion === index ? (
+                                              <ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                                            ) : (
+                                              <ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                                            )}
+                                          </div>
+
+                                          {expandedSuggestion !== index && (
+                                            <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                              {item.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {expandedSuggestion === index && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                      >
+                                        <Separator className="w-full" />
+                                        <div className="p-5 pt-4">
+                                          <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                            {item.description}
+                                          </div>
+
+                                          {item.actionableStep && (
+                                            <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                <ArrowRight
+                                                  size={16}
+                                                  className="text-blue-600 dark:text-blue-400"
+                                                />
+                                                <h5 className="text-blue-700 dark:text-blue-300 font-medium">
+                                                  Actionable Step
+                                                </h5>
+                                              </div>
+                                              <p className="text-gray-700 dark:text-gray-300 pl-6">
+                                                {item.actionableStep}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </motion.div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="bg-white/80 dark:bg-slate-900/80 p-5 rounded-xl border border-sky-100/50 dark:border-sky-900/30">
+                                <p className="text-gray-800 dark:text-gray-200">
+                                  No suggestions available.
+                                </p>
+                              </div>
+                            )}
+
+                            {/* {competitorAnalysis && (
                            <div className="mt-6 pt-6 border-t border-sky-100/50 dark:border-sky-900/30">
                              <h4 className="text-gray-800 dark:text-gray-200 font-semibold mb-3">
                                Competitor Analysis
@@ -2361,14 +2545,12 @@ export default function Home() {
                              </div>
                            </div>
                          )} */}
-                       </GlassCard>
+                          </GlassCard>
                         </motion.div>
                       </motion.div>
                     )}
                   </GlassCard>
                 </motion.div>
-                
-              
 
                 {/* Action Buttons */}
                 <AnimatePresence>
@@ -2402,6 +2584,7 @@ export default function Home() {
           </AnimatePresence>
         </div>
 
+        {/* Custom Scrollbar Styles */}
         {/* Custom Scrollbar Styles */}
         <style jsx global>{`
           @keyframes float {
