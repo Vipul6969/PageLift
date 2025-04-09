@@ -18,9 +18,11 @@ import {
   Bar,
   XAxis,
   YAxis,
+  Line,
   CartesianGrid,
   Area,
   AreaChart,
+  LineChart,
   Legend,
 } from "recharts";
 import { jsPDF } from "jspdf";
@@ -52,7 +54,7 @@ import {
   TrendingUp,
   Maximize,
   Minimize,
-  LineChart,
+  LineChart as LineChartIcon,
   Target,
   Hexagon,
   Activity,
@@ -470,15 +472,23 @@ export default function Home() {
 
     try {
       // Start fetching the user SEO data
-      const userSeoUrl = `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
+      // const userSeoUrl = `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
+      //   url
+      // )}`;
+      const userSeoUrl = `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
         url
       )}`;
       const userRequest = fetch(userSeoUrl);
 
       // Fetch competitor SEO data if competitorUrl exists
       const competitorRequest = competitorUrl
-        ? fetch(
-            `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
+        ? // ? fetch(
+          //     `https://pagelift-app.azurewebsites.net/api/seo-analyzer?url=${encodeURIComponent(
+          //       competitorUrl
+          //     )}`
+          //   )
+          fetch(
+            `http://localhost:7071/api/seo-analyzer?url=${encodeURIComponent(
               competitorUrl
             )}`
           )
@@ -827,6 +837,21 @@ export default function Home() {
   const competitorScoreRating = getScoreRating(
     competitorData?.user?.seoScore || 0
   );
+
+  const currentScore = data?.user?.seoScore || 0;
+  const growthPercentage = data?.estimationGrowth || 0;
+  
+  // Calculate how much the score should grow
+  const growthValue = (currentScore * growthPercentage) / 100;
+  
+  // Add the growth to the current score, but cap it at 100
+  const estimatedScore = Math.min(currentScore + growthValue, 100);
+  
+  const formattedData = [
+    { time: "Current", value: currentScore },
+    { time: "Estimated", value: estimatedScore },
+  ];
+  
 
   // Determine if a section is fullscreen
   const isFullscreen = fullscreenSection !== null;
@@ -1285,7 +1310,7 @@ export default function Home() {
                               {/* Trend Chart */}
                               <div className="mt-6 h-32">
                                 <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
-                                  <LineChart
+                                  <LineChartIcon
                                     size={14}
                                     className="text-emerald-500"
                                   />
@@ -1477,80 +1502,6 @@ export default function Home() {
                                       </Bar>
                                     </BarChart>
                                   </ResponsiveContainer>
-
-                                  {/* <ResponsiveContainer
-                                    width="100%"
-                                    height="100%"
-                                  >
-                                    <PieChart>
-                                      <defs>
-                                        {CHART_COLORS.map((color, index) => (
-                                          <linearGradient
-                                            key={index}
-                                            id={`colorGradient${index}`}
-                                            x1="0"
-                                            y1="0"
-                                            x2="0"
-                                            y2="1"
-                                          >
-                                            <stop
-                                              offset="0%"
-                                              stopColor={color}
-                                              stopOpacity={0.8}
-                                            />
-                                            <stop
-                                              offset="100%"
-                                              stopColor={color}
-                                              stopOpacity={0.9}
-                                            />
-                                          </linearGradient>
-                                        ))}
-                                      </defs>
-                                      <Pie
-                                        data={chartData}
-                                        dataKey="value"
-                                        nameKey="name"
-                                        cx="50%"
-                                        cy="50%"
-                                        outerRadius={100}
-                                        labelLine={false}
-                                        // label={({ name, value, percent }) =>
-                                        //   `${name}: ${value} (${(
-                                        //     percent * 100
-                                        //   ).toFixed(0)}%)`
-                                        // }
-                                        animationDuration={1000}
-                                        animationBegin={200}
-                                      >
-                                        {chartData.map((entry, index) => (
-                                          <Cell
-                                            key={`cell-${index}`}
-                                            fill={`url(#colorGradient${index})`}
-                                            className="drop-shadow-md"
-                                          />
-                                        ))}
-                                      </Pie>
-                                      <Tooltip
-                                        contentStyle={{
-                                          backgroundColor: darkMode
-                                            ? "#1e293b"
-                                            : "white",
-                                          borderRadius: "0.75rem",
-                                          border: "none",
-                                          boxShadow:
-                                            "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-                                          color: darkMode ? "white" : "black",
-                                          padding: "12px 16px",
-                                        }}
-                                      />
-                                      <Legend
-                                    layout="horizontal"
-                                    verticalAlign="bottom"
-                                    align="center"
-                                    wrapperStyle={{ paddingTop: "10px" }}
-                                  />
-                                    </PieChart>
-                                  </ResponsiveContainer> */}
                                 </div>
                               </GlassCard>
                             </motion.div>
@@ -1595,7 +1546,7 @@ export default function Home() {
                                 {/* Trend Chart */}
                                 <div className="mt-6 h-32">
                                   <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
-                                    <LineChart
+                                    <LineChartIcon
                                       size={14}
                                       className="text-pink-500"
                                     />
@@ -2534,19 +2485,149 @@ export default function Home() {
                                 </p>
                               </div>
                             )}
-
-                            {/* {competitorAnalysis && (
-                           <div className="mt-6 pt-6 border-t border-sky-100/50 dark:border-sky-900/30">
-                             <h4 className="text-gray-800 dark:text-gray-200 font-semibold mb-3">
-                               Competitor Analysis
-                             </h4>
-                             <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                               {competitorAnalysis}
-                             </div>
-                           </div>
-                         )} */}
                           </GlassCard>
                         </motion.div>
+                      </motion.div>
+                    )}
+                  </GlassCard>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  <GlassCard className="overflow-hidden">
+                    {/* Header Section */}
+                    <div
+                      className="p-6 cursor-pointer flex justify-between items-center"
+                      onClick={() => toggleSection("estimatedGrowth")}
+                    >
+                      <h2 className="text-xl font-semibold flex items-center gap-3 text-indigo-600 dark:text-indigo-300">
+                        <NeumorphicIcon icon={Lightbulb} color="primary" />
+                        Estimated Growth
+                      </h2>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFullscreen(
+                              isFullscreen ? null : "estimatedGrowth"
+                            );
+                          }}
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                        >
+                          {isFullscreen ? (
+                            <Minimize size={18} />
+                          ) : (
+                            <Maximize size={18} />
+                          )}
+                        </button>
+
+                        <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:inline-block">
+                          {activeSection === "estimatedGrowth"
+                            ? "Hide details"
+                            : "Show details"}
+                        </span>
+
+                        <div className="text-gray-400">
+                          {activeSection === "estimatedGrowth" ? (
+                            <ChevronUp size={20} />
+                          ) : (
+                            <ChevronDown size={20} />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expandable Content */}
+                    {activeSection === "estimatedGrowth" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="px-6 pb-6"
+                      >
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={formattedData}>
+                            <defs>
+                              <linearGradient
+                                id="colorGradientLine"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor="#4f46e5"
+                                  stopOpacity={0.8}
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor="#4f46e5"
+                                  stopOpacity={0}
+                                />
+                              </linearGradient>
+                            </defs>
+
+                            <XAxis
+                              dataKey="time"
+                              tick={{
+                                fill: darkMode ? "white" : "#334155",
+                                fontSize: 12,
+                              }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              domain={[
+                                (dataMin: number) => dataMin - 5,
+                                (dataMax: number) => dataMax + 5,
+                              ]}
+                              tick={{
+                                fill: darkMode ? "white" : "#334155",
+                                fontSize: 12,
+                              }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: darkMode ? "#1e293b" : "#fff",
+                                border: "none",
+                                borderRadius: 10,
+                                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+                              }}
+                              labelStyle={{
+                                color: darkMode ? "#fff" : "#0f172a",
+                                fontWeight: 500,
+                              }}
+                              formatter={(value) => [`${value}%`, "SEO Score"]}
+                            />
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                              strokeOpacity={0.1}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="url(#colorGradientLine)"
+                              strokeWidth={3}
+                              dot={false}
+                              activeDot={{
+                                r: 6,
+                                fill: "#6366f1",
+                                stroke: "#1e40af",
+                                strokeWidth: 2,
+                              }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
                       </motion.div>
                     )}
                   </GlassCard>
