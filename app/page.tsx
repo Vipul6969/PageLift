@@ -906,36 +906,62 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
                 className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center md:items-start">
                   <motion.div
-                    className="relative"
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative inline-block"
                   >
-                    <div className="absolute inset-0 bg-indigo-600 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
-                    <div className="relative bg-gradient-to-br from-indigo-500 to-violet-600 text-white p-4 rounded-2xl shadow-lg">
-                      <Hexagon size={32} />
-                    </div>
-                  </motion.div>
-                  <div>
                     <motion.h1
-                      className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-500 via-blue-500 to-violet-600 bg-clip-text text-transparent"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.6, delay: 0.2 }}
+                      className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-r from-rose-500 via-purple-500 to-emerald-500 bg-clip-text text-transparent"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                      SEO Analyzer
+                      PageLift
                     </motion.h1>
-                    <motion.p
-                      className="text-gray-600 dark:text-gray-300 mt-2"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.6, delay: 0.3 }}
+
+                    {/* AI Circle Badge */}
+                    <motion.div
+                      className="absolute -top-2 -right-8 md:-top-3 md:-right-10"
+                      initial={{ scale: 0, rotate: -20 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        delay: 0.6,
+                      }}
                     >
-                      Analyze and optimize your website's SEO performance
-                    </motion.p>
-                  </div>
+                      <div className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-purple-600 to-rose-500 shadow-lg">
+                        <span className="text-xs md:text-sm font-bold text-white">
+                          AI
+                        </span>
+                        <div className="absolute inset-0 rounded-full border border-white/20 animate-pulse"></div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 0.05 }}
+                      transition={{ duration: 0.8 }}
+                    >
+                      <div className="w-full h-full bg-gradient-to-r from-rose-300 via-purple-300 to-emerald-300 rounded-full blur-3xl" />
+                    </motion.div>
+                  </motion.div>
+
+                  <motion.p
+                    className="text-gray-600 dark:text-gray-300 mt-3 text-lg md:text-xl"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    Analyze and optimize your website's SEO performance
+                  </motion.p>
                 </div>
+
                 <motion.button
                   whileHover={{ scale: 1.05, rotate: 15 }}
                   whileTap={{ scale: 0.95 }}
